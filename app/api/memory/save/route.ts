@@ -53,11 +53,11 @@ export async function POST(req: NextRequest) {
     data: { accountId, userId, agentId, role: 'user', content: userMessage },
   })
 
-  await prisma.$queryRaw`
-    UPDATE "Memory"
-    SET embedding = ${embeddingStr}::vector
-    WHERE id = ${userMemory.id}
-  `
+await prisma.$executeRawUnsafe(
+  `UPDATE "Memory" SET embedding = $1::vector WHERE id = $2`,
+  `[${embedding.join(',')}]`,
+  userMemory.id
+)
 
   await prisma.memory.create({
     data: { accountId, userId, agentId, role: 'assistant', content: aiReply },
