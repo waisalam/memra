@@ -57,7 +57,8 @@ export const ModelName = {
   VerificationToken: 'VerificationToken',
   ApiKey: 'ApiKey',
   Memory: 'Memory',
-  Contact: 'Contact'
+  Contact: 'Contact',
+  ApiLog: 'ApiLog'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -142,6 +143,7 @@ export type ApiKeyScalarFieldEnum = (typeof ApiKeyScalarFieldEnum)[keyof typeof 
 
 export const MemoryScalarFieldEnum = {
   id: 'id',
+  accountId: 'accountId',
   userId: 'userId',
   agentId: 'agentId',
   role: 'role',
@@ -159,11 +161,26 @@ export const ContactScalarFieldEnum = {
   company: 'company',
   phone: 'phone',
   message: 'message',
+  plan: 'plan',
   status: 'status',
   createdAt: 'createdAt'
 } as const
 
 export type ContactScalarFieldEnum = (typeof ContactScalarFieldEnum)[keyof typeof ContactScalarFieldEnum]
+
+
+export const ApiLogScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  endpoint: 'endpoint',
+  method: 'method',
+  agentId: 'agentId',
+  statusCode: 'statusCode',
+  latencyMs: 'latencyMs',
+  createdAt: 'createdAt'
+} as const
+
+export type ApiLogScalarFieldEnum = (typeof ApiLogScalarFieldEnum)[keyof typeof ApiLogScalarFieldEnum]
 
 
 export const SortOrder = {

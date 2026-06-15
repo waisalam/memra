@@ -14,19 +14,33 @@ type MemoryRow = {
   similarity: number
 }
 
+function logCall(accountId: string, callerUserId: string | null, statusCode: number, latencyMs: number) {
+  ;(async () => {
+    try {
+      await prisma.apiLog.create({
+        data: { userId: accountId, endpoint: '/api/memory/context', method: 'GET', agentId: callerUserId, statusCode, latencyMs },
+      })
+    } catch (e) {
+      console.error('[ApiLog context]', e)
+    }
+  })()
+}
+
 export async function GET(req: NextRequest) {
+  const start = Date.now()
   const validated = await validateApiKey(req)
   if (!validated) {
     return Response.json({ error: 'Invalid or missing API key' }, { status: 401 })
   }
-  const { userId } = validated
+  const { accountId } = validated
 
   const { searchParams } = req.nextUrl
   const query = searchParams.get('query')
-  const agentId = searchParams.get('agentId') ?? 'default'
+  const userId = searchParams.get('userId') ?? 'default'
   const limit = parseInt(searchParams.get('limit') ?? '5', 10)
 
   if (!query) {
+    logCall(accountId, userId, 400, Date.now() - start)
     return Response.json({ error: 'query is required' }, { status: 400 })
   }
 
@@ -37,12 +51,13 @@ export async function GET(req: NextRequest) {
     SELECT id, content, role, "createdAt",
            1 - (embedding <=> ${embeddingStr}::vector) as similarity
     FROM "Memory"
-    WHERE "userId" = ${userId}
-      AND "agentId" = ${agentId}
+    WHERE "accountId" = ${accountId}
+      AND "userId" = ${userId}
       AND embedding IS NOT NULL
     ORDER BY embedding <=> ${embeddingStr}::vector
     LIMIT ${limit}
   `
 
+  logCall(accountId, userId, 200, Date.now() - start)
   return Response.json({ context: memories, count: memories.length })
 }

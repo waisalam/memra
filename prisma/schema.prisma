@@ -17,9 +17,10 @@ model User {
   plan          String    @default("free")
   memoriesCount Int       @default(0)
   apiKeys       ApiKey[]
-  memories      Memory[]
+  memories      Memory[]  @relation("MemoryAccount")
   accounts      Account[]
   sessions      Session[]
+  apiLogs       ApiLog[]
 }
 
 model Account {
@@ -69,14 +70,15 @@ model ApiKey {
 
 model Memory {
   id        String   @id @default(cuid())
+  accountId String
   userId    String
   agentId   String   @default("default")
   role      String
   content   String
   createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id])
+  account   User     @relation("MemoryAccount", fields: [accountId], references: [id], onDelete: Cascade)
 
-  @@index([userId, agentId])
+  @@index([accountId, userId])
 }
 
 model Contact {
@@ -86,9 +88,25 @@ model Contact {
   company   String?
   phone     String?
   message   String   @db.Text
+  plan      String   @default("enterprise")
   status    String   @default("new")
   createdAt DateTime @default(now())
 
   @@index([status])
+  @@index([createdAt])
+}
+
+model ApiLog {
+  id         String   @id @default(cuid())
+  userId     String
+  endpoint   String
+  method     String
+  agentId    String?
+  statusCode Int
+  latencyMs  Int
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
   @@index([createdAt])
 }

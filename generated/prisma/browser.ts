@@ -52,3 +52,8 @@ export type Memory = Prisma.MemoryModel
  * 
  */
 export type Contact = Prisma.ContactModel
+/**
+ * Model ApiLog
+ * 
+ */
+export type ApiLog = Prisma.ApiLogModel

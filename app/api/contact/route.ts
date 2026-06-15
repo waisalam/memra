@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma'
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  const { name, email, company, phone, message } = body
+  const { name, email, company, phone, message, plan } = body
 
   if (!name?.trim()) return Response.json({ error: 'Name is required' }, { status: 400 })
   if (!email?.trim()) return Response.json({ error: 'Email is required' }, { status: 400 })
@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
       company: company?.trim() || null,
       phone: phone?.trim() || null,
       message: message.trim(),
+      plan: plan?.trim() || 'enterprise',
     },
     select: { id: true, createdAt: true },
   })
@@ -39,6 +40,7 @@ export async function GET() {
       company: true,
       phone: true,
       message: true,
+      plan: true,
       status: true,
       createdAt: true,
     },

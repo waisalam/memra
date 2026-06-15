@@ -2,7 +2,7 @@ import { prisma } from './prisma'
 import { PLAN_LIMITS, type Plan } from './plans'
 
 export type ValidatedKey = {
-  userId: string
+  accountId: string
   plan: Plan
 }
 
@@ -27,15 +27,15 @@ export async function validateApiKey(request: Request): Promise<ValidatedKey | n
   })
 
   return {
-    userId: record.userId,
+    accountId: record.userId,
     plan: (record.user.plan ?? 'free') as Plan,
   }
 }
 
-export async function checkMemoryLimit(userId: string, plan: Plan): Promise<boolean> {
+export async function checkMemoryLimit(accountId: string, plan: Plan): Promise<boolean> {
   const limit = PLAN_LIMITS[plan]?.memories ?? PLAN_LIMITS.free.memories
   if (limit === Infinity) return true
 
-  const count = await prisma.memory.count({ where: { userId } })
+  const count = await prisma.memory.count({ where: { accountId } })
   return count < limit
 }

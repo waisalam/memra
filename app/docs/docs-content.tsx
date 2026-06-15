@@ -14,10 +14,23 @@ const memory = new MemoryClient({ apiKey: 'mk_live_...' })
 export async function chat(userId: string, userMessage: string) {
   // 1. Pull relevant memories before the model responds
   const { context } = await memory.getContext(userId, userMessage)
-  const contextText = context.map(m => m.content).join('\\n')
 
-  // 2. Pass context to your AI model
-  const aiReply = await yourAI.complete(userMessage, { context: contextText })
+  // Memory goes in system prompt — NOT in the user message
+  // This tells the AI what the context is and how to use it
+  const systemPrompt = context.length > 0
+    ? \`You are a helpful assistant with memory of past conversations.
+Here is what you remember:
+\${context.map((m, i) => \`\${i + 1}. [\${m.role}]: \${m.content}\`).join('\\n')}
+Use this memory to give personalized responses.\`
+    : \`You are a helpful assistant.\`
+
+  // 2. Pass context as system prompt — works with any AI provider
+  const aiReply = await yourAI.chat.completions.create({
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user',   content: userMessage  },
+    ],
+  })
 
   // 3. Save this exchange to memory
   await memory.save(userId, userMessage, aiReply)
@@ -522,6 +535,17 @@ export default function DocsContent() {
 
           <SectionH3>Example</SectionH3>
           <CodeBlock code={CONTEXT_EXAMPLE_CODE} language="ts" />
+
+          <div
+            className="rounded-xl border p-4 mt-4 text-xs leading-relaxed"
+            style={{ background: 'rgba(245,158,11,0.05)', borderColor: 'rgba(245,158,11,0.2)' }}
+          >
+            <p className="font-semibold text-amber-400 mb-1.5">⚠ Common mistake</p>
+            <p className="text-zinc-400">
+              Always inject memory into the system prompt, not the user message. Putting context
+              in the user message looks like random text to the AI — it won&apos;t use it correctly.
+            </p>
+          </div>
         </section>
 
         <Divider />

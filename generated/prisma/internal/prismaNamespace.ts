@@ -390,7 +390,8 @@ export const ModelName = {
   VerificationToken: 'VerificationToken',
   ApiKey: 'ApiKey',
   Memory: 'Memory',
-  Contact: 'Contact'
+  Contact: 'Contact',
+  ApiLog: 'ApiLog'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -406,7 +407,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "account" | "session" | "verificationToken" | "apiKey" | "memory" | "contact"
+    modelProps: "user" | "account" | "session" | "verificationToken" | "apiKey" | "memory" | "contact" | "apiLog"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -928,6 +929,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ApiLog: {
+      payload: Prisma.$ApiLogPayload<ExtArgs>
+      fields: Prisma.ApiLogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ApiLogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiLogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ApiLogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiLogPayload>
+        }
+        findFirst: {
+          args: Prisma.ApiLogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiLogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ApiLogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiLogPayload>
+        }
+        findMany: {
+          args: Prisma.ApiLogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiLogPayload>[]
+        }
+        create: {
+          args: Prisma.ApiLogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiLogPayload>
+        }
+        createMany: {
+          args: Prisma.ApiLogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ApiLogCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiLogPayload>[]
+        }
+        delete: {
+          args: Prisma.ApiLogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiLogPayload>
+        }
+        update: {
+          args: Prisma.ApiLogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiLogPayload>
+        }
+        deleteMany: {
+          args: Prisma.ApiLogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ApiLogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ApiLogUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiLogPayload>[]
+        }
+        upsert: {
+          args: Prisma.ApiLogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiLogPayload>
+        }
+        aggregate: {
+          args: Prisma.ApiLogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateApiLog>
+        }
+        groupBy: {
+          args: Prisma.ApiLogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ApiLogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ApiLogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ApiLogCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1033,6 +1108,7 @@ export type ApiKeyScalarFieldEnum = (typeof ApiKeyScalarFieldEnum)[keyof typeof 
 
 export const MemoryScalarFieldEnum = {
   id: 'id',
+  accountId: 'accountId',
   userId: 'userId',
   agentId: 'agentId',
   role: 'role',
@@ -1050,11 +1126,26 @@ export const ContactScalarFieldEnum = {
   company: 'company',
   phone: 'phone',
   message: 'message',
+  plan: 'plan',
   status: 'status',
   createdAt: 'createdAt'
 } as const
 
 export type ContactScalarFieldEnum = (typeof ContactScalarFieldEnum)[keyof typeof ContactScalarFieldEnum]
+
+
+export const ApiLogScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  endpoint: 'endpoint',
+  method: 'method',
+  agentId: 'agentId',
+  statusCode: 'statusCode',
+  latencyMs: 'latencyMs',
+  createdAt: 'createdAt'
+} as const
+
+export type ApiLogScalarFieldEnum = (typeof ApiLogScalarFieldEnum)[keyof typeof ApiLogScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1266,6 +1357,7 @@ export type GlobalOmitConfig = {
   apiKey?: Prisma.ApiKeyOmit
   memory?: Prisma.MemoryOmit
   contact?: Prisma.ContactOmit
+  apiLog?: Prisma.ApiLogOmit
 }
 
 /* Types for Logging */

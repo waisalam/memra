@@ -7,32 +7,42 @@ import { PLAN_LIMITS } from '@/lib/plans'
 
 export const runtime = 'nodejs'
 
+function logCall(accountId: string, callerUserId: string | null, statusCode: number, latencyMs: number) {
+  ;(async () => {
+    try {
+      await prisma.apiLog.create({
+        data: { userId: accountId, endpoint: '/api/memory/save', method: 'POST', agentId: callerUserId, statusCode, latencyMs },
+      })
+    } catch (e) {
+      console.error('[ApiLog save]', e)
+    }
+  })()
+}
+
 export async function POST(req: NextRequest) {
+  const start = Date.now()
   const validated = await validateApiKey(req)
   if (!validated) {
     return Response.json({ error: 'Invalid or missing API key' }, { status: 401 })
   }
 
-  const { userId, plan } = validated
+  const { accountId, plan } = validated
 
-  const withinLimit = await checkMemoryLimit(userId, plan)
+  const withinLimit = await checkMemoryLimit(accountId, plan)
   if (!withinLimit) {
     const limit = PLAN_LIMITS[plan].memories
+    logCall(accountId, null, 429, Date.now() - start)
     return Response.json(
-      {
-        error: 'Memory limit reached',
-        limit,
-        plan,
-        upgrade: 'https://memra.dev/pricing',
-      },
+      { error: 'Memory limit reached', limit, plan, upgrade: 'https://memra.dev/pricing' },
       { status: 429 }
     )
   }
 
   const body = await req.json()
-  const { agentId = 'default', userMessage, aiReply } = body
+  const { userId = 'default', agentId = 'default', userMessage, aiReply } = body
 
   if (!userMessage || !aiReply) {
+    logCall(accountId, userId, 400, Date.now() - start)
     return Response.json({ error: 'userMessage and aiReply are required' }, { status: 400 })
   }
 
@@ -40,7 +50,7 @@ export async function POST(req: NextRequest) {
   const embeddingStr = `[${embedding.join(',')}]`
 
   const userMemory = await prisma.memory.create({
-    data: { userId, agentId, role: 'user', content: userMessage },
+    data: { accountId, userId, agentId, role: 'user', content: userMessage },
   })
 
   await prisma.$queryRaw`
@@ -50,14 +60,14 @@ export async function POST(req: NextRequest) {
   `
 
   await prisma.memory.create({
-    data: { userId, agentId, role: 'assistant', content: aiReply },
+    data: { accountId, userId, agentId, role: 'assistant', content: aiReply },
   })
 
-  // Keep memoriesCount in sync (best-effort, non-blocking)
   prisma.user.update({
-    where: { id: userId },
+    where: { id: accountId },
     data: { memoriesCount: { increment: 2 } },
   }).catch(() => {})
 
+  logCall(accountId, userId, 200, Date.now() - start)
   return Response.json({ success: true, saved: 2 })
 }

@@ -14,17 +14,21 @@ export async function chat(userId: string, userMessage: string) {
   // Get relevant past context
   const { context } = await memory.getContext(userId, userMessage)
 
-  // Build prompt with memory
+  // Memory goes in system prompt — NOT in the user message
+  // This tells the AI what the context is and how to use it
   const systemPrompt = context.length > 0
-    ? \`Previous context:\\n\${context.map(m => m.content).join('\\n')}\`
-    : 'No previous context.'
+    ? \`You are a helpful assistant with memory of past conversations.
+Here is what you remember:
+\${context.map((m, i) => \`\${i + 1}. [\${m.role}]: \${m.content}\`).join('\\n')}
+Use this memory to give personalized responses.\`
+    : \`You are a helpful assistant.\`
 
   // Your AI call — works with any provider
   const reply = await openai.chat.completions.create({
     model: 'gpt-4o',
     messages: [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: userMessage },
+      { role: 'user',   content: userMessage  },
     ],
   })
 

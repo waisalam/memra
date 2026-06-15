@@ -7,10 +7,10 @@ type State = 'idle' | 'loading' | 'success' | 'error'
 export default function ContactForm() {
   const [state, setState] = useState<State>('idle')
   const [error, setError] = useState('')
-  const [form, setForm] = useState({ name: '', email: '', company: '', phone: '', message: '' })
+  const [form, setForm] = useState({ name: '', email: '', company: '', phone: '', message: '', plan: 'enterprise' })
 
   function set(field: keyof typeof form) {
-    return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
       setForm((prev) => ({ ...prev, [field]: e.target.value }))
   }
 
@@ -114,8 +114,22 @@ export default function ContactForm() {
       </div>
 
       <div className="space-y-1.5">
+        <label className="text-xs font-medium text-zinc-500">Plan interest</label>
+        <select
+          value={form.plan}
+          onChange={set('plan')}
+          className={inputClass}
+          style={{ background: 'rgba(255,255,255,0.03)' }}
+        >
+          <option value="pro">Pro — $29/month</option>
+          <option value="enterprise">Enterprise — Custom pricing</option>
+          <option value="custom">Custom / Other</option>
+        </select>
+      </div>
+
+      <div className="space-y-1.5">
         <label className="text-xs font-medium text-zinc-500">
-          Why do you need Enterprise? <span className="text-red-500">*</span>
+          Tell us about your use case <span className="text-red-500">*</span>
         </label>
         <textarea
           rows={5}

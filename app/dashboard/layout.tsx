@@ -14,8 +14,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
         userImage={session.user.image}
         plan={session.user.plan}
       />
-      <main className="ml-60 min-h-screen">
-        <div className="max-w-5xl mx-auto px-8 py-8">
+      {/* lg:ml-60 matches sidebar width; on mobile no margin, top padding clears the hamburger */}
+      <main className="lg:ml-60 min-h-screen">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-16 lg:pt-8">
           {children}
         </div>
       </main>

@@ -26,6 +26,7 @@ export type AggregateMemory = {
 
 export type MemoryMinAggregateOutputType = {
   id: string | null
+  accountId: string | null
   userId: string | null
   agentId: string | null
   role: string | null
@@ -35,6 +36,7 @@ export type MemoryMinAggregateOutputType = {
 
 export type MemoryMaxAggregateOutputType = {
   id: string | null
+  accountId: string | null
   userId: string | null
   agentId: string | null
   role: string | null
@@ -44,6 +46,7 @@ export type MemoryMaxAggregateOutputType = {
 
 export type MemoryCountAggregateOutputType = {
   id: number
+  accountId: number
   userId: number
   agentId: number
   role: number
@@ -55,6 +58,7 @@ export type MemoryCountAggregateOutputType = {
 
 export type MemoryMinAggregateInputType = {
   id?: true
+  accountId?: true
   userId?: true
   agentId?: true
   role?: true
@@ -64,6 +68,7 @@ export type MemoryMinAggregateInputType = {
 
 export type MemoryMaxAggregateInputType = {
   id?: true
+  accountId?: true
   userId?: true
   agentId?: true
   role?: true
@@ -73,6 +78,7 @@ export type MemoryMaxAggregateInputType = {
 
 export type MemoryCountAggregateInputType = {
   id?: true
+  accountId?: true
   userId?: true
   agentId?: true
   role?: true
@@ -155,6 +161,7 @@ export type MemoryGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalA
 
 export type MemoryGroupByOutputType = {
   id: string
+  accountId: string
   userId: string
   agentId: string
   role: string
@@ -185,22 +192,24 @@ export type MemoryWhereInput = {
   OR?: Prisma.MemoryWhereInput[]
   NOT?: Prisma.MemoryWhereInput | Prisma.MemoryWhereInput[]
   id?: Prisma.StringFilter<"Memory"> | string
+  accountId?: Prisma.StringFilter<"Memory"> | string
   userId?: Prisma.StringFilter<"Memory"> | string
   agentId?: Prisma.StringFilter<"Memory"> | string
   role?: Prisma.StringFilter<"Memory"> | string
   content?: Prisma.StringFilter<"Memory"> | string
   createdAt?: Prisma.DateTimeFilter<"Memory"> | Date | string
-  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  account?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
 
 export type MemoryOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  accountId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   agentId?: Prisma.SortOrder
   role?: Prisma.SortOrder
   content?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  user?: Prisma.UserOrderByWithRelationInput
+  account?: Prisma.UserOrderByWithRelationInput
 }
 
 export type MemoryWhereUniqueInput = Prisma.AtLeast<{
@@ -208,16 +217,18 @@ export type MemoryWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.MemoryWhereInput | Prisma.MemoryWhereInput[]
   OR?: Prisma.MemoryWhereInput[]
   NOT?: Prisma.MemoryWhereInput | Prisma.MemoryWhereInput[]
+  accountId?: Prisma.StringFilter<"Memory"> | string
   userId?: Prisma.StringFilter<"Memory"> | string
   agentId?: Prisma.StringFilter<"Memory"> | string
   role?: Prisma.StringFilter<"Memory"> | string
   content?: Prisma.StringFilter<"Memory"> | string
   createdAt?: Prisma.DateTimeFilter<"Memory"> | Date | string
-  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  account?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }, "id">
 
 export type MemoryOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  accountId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   agentId?: Prisma.SortOrder
   role?: Prisma.SortOrder
@@ -233,6 +244,7 @@ export type MemoryScalarWhereWithAggregatesInput = {
   OR?: Prisma.MemoryScalarWhereWithAggregatesInput[]
   NOT?: Prisma.MemoryScalarWhereWithAggregatesInput | Prisma.MemoryScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Memory"> | string
+  accountId?: Prisma.StringWithAggregatesFilter<"Memory"> | string
   userId?: Prisma.StringWithAggregatesFilter<"Memory"> | string
   agentId?: Prisma.StringWithAggregatesFilter<"Memory"> | string
   role?: Prisma.StringWithAggregatesFilter<"Memory"> | string
@@ -242,15 +254,17 @@ export type MemoryScalarWhereWithAggregatesInput = {
 
 export type MemoryCreateInput = {
   id?: string
+  userId: string
   agentId?: string
   role: string
   content: string
   createdAt?: Date | string
-  user: Prisma.UserCreateNestedOneWithoutMemoriesInput
+  account: Prisma.UserCreateNestedOneWithoutMemoriesInput
 }
 
 export type MemoryUncheckedCreateInput = {
   id?: string
+  accountId: string
   userId: string
   agentId?: string
   role: string
@@ -260,15 +274,17 @@ export type MemoryUncheckedCreateInput = {
 
 export type MemoryUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
   agentId?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.UserUpdateOneRequiredWithoutMemoriesNestedInput
+  account?: Prisma.UserUpdateOneRequiredWithoutMemoriesNestedInput
 }
 
 export type MemoryUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  accountId?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   agentId?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
@@ -278,6 +294,7 @@ export type MemoryUncheckedUpdateInput = {
 
 export type MemoryCreateManyInput = {
   id?: string
+  accountId: string
   userId: string
   agentId?: string
   role: string
@@ -287,6 +304,7 @@ export type MemoryCreateManyInput = {
 
 export type MemoryUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
   agentId?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
@@ -295,6 +313,7 @@ export type MemoryUpdateManyMutationInput = {
 
 export type MemoryUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  accountId?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   agentId?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
@@ -314,6 +333,7 @@ export type MemoryOrderByRelationAggregateInput = {
 
 export type MemoryCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  accountId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   agentId?: Prisma.SortOrder
   role?: Prisma.SortOrder
@@ -323,6 +343,7 @@ export type MemoryCountOrderByAggregateInput = {
 
 export type MemoryMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  accountId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   agentId?: Prisma.SortOrder
   role?: Prisma.SortOrder
@@ -332,6 +353,7 @@ export type MemoryMaxOrderByAggregateInput = {
 
 export type MemoryMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  accountId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   agentId?: Prisma.SortOrder
   role?: Prisma.SortOrder
@@ -339,88 +361,90 @@ export type MemoryMinOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
 }
 
-export type MemoryCreateNestedManyWithoutUserInput = {
-  create?: Prisma.XOR<Prisma.MemoryCreateWithoutUserInput, Prisma.MemoryUncheckedCreateWithoutUserInput> | Prisma.MemoryCreateWithoutUserInput[] | Prisma.MemoryUncheckedCreateWithoutUserInput[]
-  connectOrCreate?: Prisma.MemoryCreateOrConnectWithoutUserInput | Prisma.MemoryCreateOrConnectWithoutUserInput[]
-  createMany?: Prisma.MemoryCreateManyUserInputEnvelope
+export type MemoryCreateNestedManyWithoutAccountInput = {
+  create?: Prisma.XOR<Prisma.MemoryCreateWithoutAccountInput, Prisma.MemoryUncheckedCreateWithoutAccountInput> | Prisma.MemoryCreateWithoutAccountInput[] | Prisma.MemoryUncheckedCreateWithoutAccountInput[]
+  connectOrCreate?: Prisma.MemoryCreateOrConnectWithoutAccountInput | Prisma.MemoryCreateOrConnectWithoutAccountInput[]
+  createMany?: Prisma.MemoryCreateManyAccountInputEnvelope
   connect?: Prisma.MemoryWhereUniqueInput | Prisma.MemoryWhereUniqueInput[]
 }
 
-export type MemoryUncheckedCreateNestedManyWithoutUserInput = {
-  create?: Prisma.XOR<Prisma.MemoryCreateWithoutUserInput, Prisma.MemoryUncheckedCreateWithoutUserInput> | Prisma.MemoryCreateWithoutUserInput[] | Prisma.MemoryUncheckedCreateWithoutUserInput[]
-  connectOrCreate?: Prisma.MemoryCreateOrConnectWithoutUserInput | Prisma.MemoryCreateOrConnectWithoutUserInput[]
-  createMany?: Prisma.MemoryCreateManyUserInputEnvelope
+export type MemoryUncheckedCreateNestedManyWithoutAccountInput = {
+  create?: Prisma.XOR<Prisma.MemoryCreateWithoutAccountInput, Prisma.MemoryUncheckedCreateWithoutAccountInput> | Prisma.MemoryCreateWithoutAccountInput[] | Prisma.MemoryUncheckedCreateWithoutAccountInput[]
+  connectOrCreate?: Prisma.MemoryCreateOrConnectWithoutAccountInput | Prisma.MemoryCreateOrConnectWithoutAccountInput[]
+  createMany?: Prisma.MemoryCreateManyAccountInputEnvelope
   connect?: Prisma.MemoryWhereUniqueInput | Prisma.MemoryWhereUniqueInput[]
 }
 
-export type MemoryUpdateManyWithoutUserNestedInput = {
-  create?: Prisma.XOR<Prisma.MemoryCreateWithoutUserInput, Prisma.MemoryUncheckedCreateWithoutUserInput> | Prisma.MemoryCreateWithoutUserInput[] | Prisma.MemoryUncheckedCreateWithoutUserInput[]
-  connectOrCreate?: Prisma.MemoryCreateOrConnectWithoutUserInput | Prisma.MemoryCreateOrConnectWithoutUserInput[]
-  upsert?: Prisma.MemoryUpsertWithWhereUniqueWithoutUserInput | Prisma.MemoryUpsertWithWhereUniqueWithoutUserInput[]
-  createMany?: Prisma.MemoryCreateManyUserInputEnvelope
+export type MemoryUpdateManyWithoutAccountNestedInput = {
+  create?: Prisma.XOR<Prisma.MemoryCreateWithoutAccountInput, Prisma.MemoryUncheckedCreateWithoutAccountInput> | Prisma.MemoryCreateWithoutAccountInput[] | Prisma.MemoryUncheckedCreateWithoutAccountInput[]
+  connectOrCreate?: Prisma.MemoryCreateOrConnectWithoutAccountInput | Prisma.MemoryCreateOrConnectWithoutAccountInput[]
+  upsert?: Prisma.MemoryUpsertWithWhereUniqueWithoutAccountInput | Prisma.MemoryUpsertWithWhereUniqueWithoutAccountInput[]
+  createMany?: Prisma.MemoryCreateManyAccountInputEnvelope
   set?: Prisma.MemoryWhereUniqueInput | Prisma.MemoryWhereUniqueInput[]
   disconnect?: Prisma.MemoryWhereUniqueInput | Prisma.MemoryWhereUniqueInput[]
   delete?: Prisma.MemoryWhereUniqueInput | Prisma.MemoryWhereUniqueInput[]
   connect?: Prisma.MemoryWhereUniqueInput | Prisma.MemoryWhereUniqueInput[]
-  update?: Prisma.MemoryUpdateWithWhereUniqueWithoutUserInput | Prisma.MemoryUpdateWithWhereUniqueWithoutUserInput[]
-  updateMany?: Prisma.MemoryUpdateManyWithWhereWithoutUserInput | Prisma.MemoryUpdateManyWithWhereWithoutUserInput[]
+  update?: Prisma.MemoryUpdateWithWhereUniqueWithoutAccountInput | Prisma.MemoryUpdateWithWhereUniqueWithoutAccountInput[]
+  updateMany?: Prisma.MemoryUpdateManyWithWhereWithoutAccountInput | Prisma.MemoryUpdateManyWithWhereWithoutAccountInput[]
   deleteMany?: Prisma.MemoryScalarWhereInput | Prisma.MemoryScalarWhereInput[]
 }
 
-export type MemoryUncheckedUpdateManyWithoutUserNestedInput = {
-  create?: Prisma.XOR<Prisma.MemoryCreateWithoutUserInput, Prisma.MemoryUncheckedCreateWithoutUserInput> | Prisma.MemoryCreateWithoutUserInput[] | Prisma.MemoryUncheckedCreateWithoutUserInput[]
-  connectOrCreate?: Prisma.MemoryCreateOrConnectWithoutUserInput | Prisma.MemoryCreateOrConnectWithoutUserInput[]
-  upsert?: Prisma.MemoryUpsertWithWhereUniqueWithoutUserInput | Prisma.MemoryUpsertWithWhereUniqueWithoutUserInput[]
-  createMany?: Prisma.MemoryCreateManyUserInputEnvelope
+export type MemoryUncheckedUpdateManyWithoutAccountNestedInput = {
+  create?: Prisma.XOR<Prisma.MemoryCreateWithoutAccountInput, Prisma.MemoryUncheckedCreateWithoutAccountInput> | Prisma.MemoryCreateWithoutAccountInput[] | Prisma.MemoryUncheckedCreateWithoutAccountInput[]
+  connectOrCreate?: Prisma.MemoryCreateOrConnectWithoutAccountInput | Prisma.MemoryCreateOrConnectWithoutAccountInput[]
+  upsert?: Prisma.MemoryUpsertWithWhereUniqueWithoutAccountInput | Prisma.MemoryUpsertWithWhereUniqueWithoutAccountInput[]
+  createMany?: Prisma.MemoryCreateManyAccountInputEnvelope
   set?: Prisma.MemoryWhereUniqueInput | Prisma.MemoryWhereUniqueInput[]
   disconnect?: Prisma.MemoryWhereUniqueInput | Prisma.MemoryWhereUniqueInput[]
   delete?: Prisma.MemoryWhereUniqueInput | Prisma.MemoryWhereUniqueInput[]
   connect?: Prisma.MemoryWhereUniqueInput | Prisma.MemoryWhereUniqueInput[]
-  update?: Prisma.MemoryUpdateWithWhereUniqueWithoutUserInput | Prisma.MemoryUpdateWithWhereUniqueWithoutUserInput[]
-  updateMany?: Prisma.MemoryUpdateManyWithWhereWithoutUserInput | Prisma.MemoryUpdateManyWithWhereWithoutUserInput[]
+  update?: Prisma.MemoryUpdateWithWhereUniqueWithoutAccountInput | Prisma.MemoryUpdateWithWhereUniqueWithoutAccountInput[]
+  updateMany?: Prisma.MemoryUpdateManyWithWhereWithoutAccountInput | Prisma.MemoryUpdateManyWithWhereWithoutAccountInput[]
   deleteMany?: Prisma.MemoryScalarWhereInput | Prisma.MemoryScalarWhereInput[]
 }
 
-export type MemoryCreateWithoutUserInput = {
+export type MemoryCreateWithoutAccountInput = {
   id?: string
+  userId: string
   agentId?: string
   role: string
   content: string
   createdAt?: Date | string
 }
 
-export type MemoryUncheckedCreateWithoutUserInput = {
+export type MemoryUncheckedCreateWithoutAccountInput = {
   id?: string
+  userId: string
   agentId?: string
   role: string
   content: string
   createdAt?: Date | string
 }
 
-export type MemoryCreateOrConnectWithoutUserInput = {
+export type MemoryCreateOrConnectWithoutAccountInput = {
   where: Prisma.MemoryWhereUniqueInput
-  create: Prisma.XOR<Prisma.MemoryCreateWithoutUserInput, Prisma.MemoryUncheckedCreateWithoutUserInput>
+  create: Prisma.XOR<Prisma.MemoryCreateWithoutAccountInput, Prisma.MemoryUncheckedCreateWithoutAccountInput>
 }
 
-export type MemoryCreateManyUserInputEnvelope = {
-  data: Prisma.MemoryCreateManyUserInput | Prisma.MemoryCreateManyUserInput[]
+export type MemoryCreateManyAccountInputEnvelope = {
+  data: Prisma.MemoryCreateManyAccountInput | Prisma.MemoryCreateManyAccountInput[]
   skipDuplicates?: boolean
 }
 
-export type MemoryUpsertWithWhereUniqueWithoutUserInput = {
+export type MemoryUpsertWithWhereUniqueWithoutAccountInput = {
   where: Prisma.MemoryWhereUniqueInput
-  update: Prisma.XOR<Prisma.MemoryUpdateWithoutUserInput, Prisma.MemoryUncheckedUpdateWithoutUserInput>
-  create: Prisma.XOR<Prisma.MemoryCreateWithoutUserInput, Prisma.MemoryUncheckedCreateWithoutUserInput>
+  update: Prisma.XOR<Prisma.MemoryUpdateWithoutAccountInput, Prisma.MemoryUncheckedUpdateWithoutAccountInput>
+  create: Prisma.XOR<Prisma.MemoryCreateWithoutAccountInput, Prisma.MemoryUncheckedCreateWithoutAccountInput>
 }
 
-export type MemoryUpdateWithWhereUniqueWithoutUserInput = {
+export type MemoryUpdateWithWhereUniqueWithoutAccountInput = {
   where: Prisma.MemoryWhereUniqueInput
-  data: Prisma.XOR<Prisma.MemoryUpdateWithoutUserInput, Prisma.MemoryUncheckedUpdateWithoutUserInput>
+  data: Prisma.XOR<Prisma.MemoryUpdateWithoutAccountInput, Prisma.MemoryUncheckedUpdateWithoutAccountInput>
 }
 
-export type MemoryUpdateManyWithWhereWithoutUserInput = {
+export type MemoryUpdateManyWithWhereWithoutAccountInput = {
   where: Prisma.MemoryScalarWhereInput
-  data: Prisma.XOR<Prisma.MemoryUpdateManyMutationInput, Prisma.MemoryUncheckedUpdateManyWithoutUserInput>
+  data: Prisma.XOR<Prisma.MemoryUpdateManyMutationInput, Prisma.MemoryUncheckedUpdateManyWithoutAccountInput>
 }
 
 export type MemoryScalarWhereInput = {
@@ -428,6 +452,7 @@ export type MemoryScalarWhereInput = {
   OR?: Prisma.MemoryScalarWhereInput[]
   NOT?: Prisma.MemoryScalarWhereInput | Prisma.MemoryScalarWhereInput[]
   id?: Prisma.StringFilter<"Memory"> | string
+  accountId?: Prisma.StringFilter<"Memory"> | string
   userId?: Prisma.StringFilter<"Memory"> | string
   agentId?: Prisma.StringFilter<"Memory"> | string
   role?: Prisma.StringFilter<"Memory"> | string
@@ -435,32 +460,36 @@ export type MemoryScalarWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Memory"> | Date | string
 }
 
-export type MemoryCreateManyUserInput = {
+export type MemoryCreateManyAccountInput = {
   id?: string
+  userId: string
   agentId?: string
   role: string
   content: string
   createdAt?: Date | string
 }
 
-export type MemoryUpdateWithoutUserInput = {
+export type MemoryUpdateWithoutAccountInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
   agentId?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type MemoryUncheckedUpdateWithoutUserInput = {
+export type MemoryUncheckedUpdateWithoutAccountInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
   agentId?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type MemoryUncheckedUpdateManyWithoutUserInput = {
+export type MemoryUncheckedUpdateManyWithoutAccountInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
   agentId?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
@@ -471,36 +500,40 @@ export type MemoryUncheckedUpdateManyWithoutUserInput = {
 
 export type MemorySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  accountId?: boolean
   userId?: boolean
   agentId?: boolean
   role?: boolean
   content?: boolean
   createdAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  account?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["memory"]>
 
 export type MemorySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  accountId?: boolean
   userId?: boolean
   agentId?: boolean
   role?: boolean
   content?: boolean
   createdAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  account?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["memory"]>
 
 export type MemorySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  accountId?: boolean
   userId?: boolean
   agentId?: boolean
   role?: boolean
   content?: boolean
   createdAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  account?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["memory"]>
 
 export type MemorySelectScalar = {
   id?: boolean
+  accountId?: boolean
   userId?: boolean
   agentId?: boolean
   role?: boolean
@@ -508,24 +541,25 @@ export type MemorySelectScalar = {
   createdAt?: boolean
 }
 
-export type MemoryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "agentId" | "role" | "content" | "createdAt", ExtArgs["result"]["memory"]>
+export type MemoryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "accountId" | "userId" | "agentId" | "role" | "content" | "createdAt", ExtArgs["result"]["memory"]>
 export type MemoryInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  account?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type MemoryIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  account?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type MemoryIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  account?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 
 export type $MemoryPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Memory"
   objects: {
-    user: Prisma.$UserPayload<ExtArgs>
+    account: Prisma.$UserPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
+    accountId: string
     userId: string
     agentId: string
     role: string
@@ -925,7 +959,7 @@ readonly fields: MemoryFieldRefs;
  */
 export interface Prisma__MemoryClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  account<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -956,6 +990,7 @@ export interface Prisma__MemoryClient<T, Null = never, ExtArgs extends runtime.T
  */
 export interface MemoryFieldRefs {
   readonly id: Prisma.FieldRef<"Memory", 'String'>
+  readonly accountId: Prisma.FieldRef<"Memory", 'String'>
   readonly userId: Prisma.FieldRef<"Memory", 'String'>
   readonly agentId: Prisma.FieldRef<"Memory", 'String'>
   readonly role: Prisma.FieldRef<"Memory", 'String'>
