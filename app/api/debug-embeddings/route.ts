@@ -1,25 +1,16 @@
 // app/api/debug-embedding/route.ts
-
 export async function GET() {
-  const apiKey = process.env.HUGGINGFACE_API_KEY
+  const apiKey = process.env.HUGGINGFACE_API_KEY!
 
-  if (!apiKey) {
-    return Response.json({
-      step: 'env_check',
-      error: 'HUGGINGFACE_API_KEY is undefined on this deployment',
-      hint: 'Env var exists in Vercel settings but deployment does not have it',
-      allEnvKeys: Object.keys(process.env)
-        .filter(k => 
-          k.includes('HUGGING') || 
-          k.includes('MEMRA') || 
-          k.includes('DATABASE') ||
-          k.includes('NEXTAUTH')
-        )
-    }, { status: 500 })
-  }
-
-  // Key exists — now test HuggingFace
   try {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 10000) // 10s timeout
+try {
+  const pingRes = await fetch('https://httpbin.org/get')
+  console.log('Basic connectivity:', pingRes.status)
+} catch (e) {
+  console.log('No outbound internet at all:', e)
+}
     const res = await fetch(
       'https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2',
       {
@@ -29,38 +20,26 @@ export async function GET() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          inputs: 'hello world test',
+          inputs: 'hello world',
           options: { wait_for_model: true }
-        })
+        }),
+        signal: controller.signal
       }
     )
-
-    const rawText = await res.text()
-
-    let parsed
-    try { parsed = JSON.parse(rawText) } catch { parsed = null }
-
-    const embedding = Array.isArray(parsed)
-      ? (Array.isArray(parsed[0]) ? parsed[0] : parsed)
-      : null
+    clearTimeout(timeout)
 
     return Response.json({
-      step: 'huggingface_call',
-      keyFound: true,
-      keyPrefix: apiKey.slice(0, 10) + '...',
       httpStatus: res.status,
-      httpOk: res.ok,
-      responsePreview: rawText.slice(0, 300),
-      embeddingLength: embedding ? embedding.length : 'not an array',
-      embeddingWorking: embedding && embedding.length === 384
+      ok: res.ok,
+      body: await res.text()
     })
 
   } catch (err) {
     return Response.json({
-      step: 'huggingface_call',
-      keyFound: true,
-      keyPrefix: apiKey.slice(0, 10) + '...',
-      fetchError: err instanceof Error ? err.message : String(err)
+      fetchError: err instanceof Error ? err.message : String(err),
+      errorName: err instanceof Error ? err.name : 'unknown',
+      // Test if ANY external fetch works
+      hint: 'Testing basic connectivity...'
     }, { status: 500 })
   }
 }
