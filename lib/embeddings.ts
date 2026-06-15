@@ -25,7 +25,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     },
     body: JSON.stringify({
       texts: [input],
-      model: 'embed-english-light-v3.0',
+      model:  'embed-english-v3.0',
       input_type: 'search_document',
       truncate: 'END',
     }),
