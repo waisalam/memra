@@ -4,12 +4,12 @@ const nextConfig: NextConfig = {
   serverExternalPackages: [
     '@prisma/client',
     '.prisma/client',
-    '@xenova/transformers',
     '@auth/prisma-adapter',
     '@auth/core',
-    'sharp', // moved here from webpack externals
+    // Removed @xenova/transformers — no longer used
+    // Removed sharp from here — handled in webpack below
   ],
-  turbopack: {}, // silences the error, Turbopack ignores webpack config
+  turbopack: {},
   webpack: (
     config: {
       externals: unknown[]
@@ -17,7 +17,12 @@ const nextConfig: NextConfig = {
     },
     { isServer }: { isServer: boolean }
   ) => {
-    config.externals = [...(config.externals ?? []), 'sharp']
+    // Exclude packages that cause build issues
+    config.externals = [
+      ...(config.externals ?? []),
+      'sharp',
+      '@xenova/transformers', // keep here so webpack doesn't try to bundle it
+    ]
 
     if (isServer) {
       const nodeBuiltinHandler = (
