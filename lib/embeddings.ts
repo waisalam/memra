@@ -1,6 +1,6 @@
 // lib/embeddings.ts
-// Provider: Cohere embed-english-light-v3.0
-// Dimensions: 384 — matches existing pgvector(384) column, no DB changes needed
+/// Provider: Cohere embed-english-v3.0
+// Dimensions: 1024 — matches existing pgvector(1024) column
 // Free tier: 1000 calls/month at dashboard.cohere.com
 // Works on Vercel — no network restrictions like HuggingFace
 
@@ -47,7 +47,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     )
   }
 
-  if (embedding.length !== 384) {
+  if (embedding.length !== 1024) {
     throw new Error(
       `Expected 384 dimensions but got ${embedding.length}. Wrong model selected.`
     )
