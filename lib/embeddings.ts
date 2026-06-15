@@ -1,29 +1,47 @@
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let embeddingPipeline: any = null
-let loadPromise: Promise<void> | null = null
-
-async function loadPipeline(): Promise<void> {
-  const { pipeline, env } = await import('@xenova/transformers')
-  // Allow remote model download; disable local model path check
-  env.allowRemoteModels = true
-  env.allowLocalModels = false
-  embeddingPipeline = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
-    quantized: true,
-  })
-}
+// lib/embeddings.ts
+// Replaced @xenova/transformers (breaks on Vercel — model too large for serverless)
+// Now uses HuggingFace Inference API with the SAME model (all-MiniLM-L6-v2)
+// Same 384 dimensions — no database changes needed
 
 export async function generateEmbedding(text: string): Promise<number[]> {
-  if (!embeddingPipeline) {
-    if (!loadPromise) {
-      loadPromise = loadPipeline().catch((err) => {
-        // Reset so next request retries
-        loadPromise = null
-        embeddingPipeline = null
-        throw err
+  const apiKey = process.env.HUGGINGFACE_API_KEY
+
+  if (!apiKey) {
+    throw new Error('HUGGINGFACE_API_KEY is not set in environment variables')
+  }
+
+  const res = await fetch(
+    'https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2',
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        inputs: text,
+        options: { wait_for_model: true }
       })
     }
-    await loadPromise
+  )
+
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`HuggingFace embedding API failed: ${res.status} — ${errorText}`)
   }
-  const output = await embeddingPipeline(text, { pooling: 'mean', normalize: true })
-  return Array.from(output.data as Float32Array)
+
+  const data = await res.json()
+
+  // HuggingFace sometimes returns a nested array — flatten it
+  const embedding: number[] = Array.isArray(data[0]) ? data[0] : data
+
+  if (!Array.isArray(embedding)) {
+    throw new Error(`Unexpected embedding response shape: ${JSON.stringify(data).slice(0, 200)}`)
+  }
+
+  if (embedding.length !== 384) {
+    throw new Error(`Expected 384 dimensions, got ${embedding.length}`)
+  }
+
+  return embedding
 }
