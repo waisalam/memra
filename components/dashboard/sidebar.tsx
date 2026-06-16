@@ -1,14 +1,15 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { signOut } from 'next-auth/react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 
-const NAV = [
+const MEMORY_NAV = [
   {
     href: '/dashboard',
     label: 'Overview',
+    exact: true,
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
         <rect x="3" y="3" width="7" height="7" rx="1.5" />
@@ -19,8 +20,9 @@ const NAV = [
     ),
   },
   {
-    href: '/dashboard/keys',
-    label: 'API Keys',
+    href: '/dashboard/keys?type=memory',
+    label: 'Memory Keys',
+    exact: false,
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
         <circle cx="7" cy="17" r="4" />
@@ -29,8 +31,35 @@ const NAV = [
     ),
   },
   {
-    href: '/dashboard/activity',
-    label: 'Activity',
+    href: '/dashboard/usage',
+    label: 'Usage',
+    exact: false,
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <line x1="18" y1="20" x2="18" y2="10" />
+        <line x1="12" y1="20" x2="12" y2="4" />
+        <line x1="6" y1="20" x2="6" y2="14" />
+      </svg>
+    ),
+  },
+]
+
+const MCP_NAV = [
+  {
+    href: '/dashboard/keys?type=mcp',
+    label: 'MCP Keys',
+    exact: false,
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <circle cx="7" cy="17" r="4" />
+        <path d="M9.5 14.5l9-9m0 0l3 3-3.5 3.5-3-3M15 5l3 3" />
+      </svg>
+    ),
+  },
+  {
+    href: '/dashboard/mcp',
+    label: 'MCP Sessions',
+    exact: false,
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
         <polyline points="22,12 18,12 15,21 9,3 6,12 2,12" />
@@ -38,24 +67,15 @@ const NAV = [
     ),
   },
   {
-    href: '/dashboard/users',
-    label: 'Users',
+    href: '/docs/mcp',
+    label: 'MCP Docs',
+    exact: false,
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <circle cx="9" cy="7" r="4" />
-        <path d="M1 21v-2a4 4 0 014-4h8a4 4 0 014 4v2" />
-        <path d="M17 11l2 2 4-4" />
-      </svg>
-    ),
-  },
-  {
-    href: '/dashboard/usage',
-    label: 'Usage',
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <line x1="18" y1="20" x2="18" y2="10" />
-        <line x1="12" y1="20" x2="12" y2="4" />
-        <line x1="6" y1="20" x2="6" y2="14" />
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+        <polyline points="14,2 14,8 20,8" />
+        <line x1="16" y1="13" x2="8" y2="13" />
+        <line x1="16" y1="17" x2="8" y2="17" />
       </svg>
     ),
   },
@@ -92,26 +112,50 @@ interface Props {
   plan?: string
 }
 
-export function Sidebar({ userName, userEmail, userImage, plan = 'free' }: Props) {
-  const pathname = usePathname()
-  const [signingOut, setSigningOut] = useState(false)
-  const [open, setOpen] = useState(false)
+function SidebarNav({ pathname, plan, userName, userEmail, userImage, open, setOpen, signingOut, handleSignOut }: {
+  pathname: string
+  plan: string
+  userName?: string | null
+  userEmail?: string | null
+  userImage?: string | null
+  open: boolean
+  setOpen: (v: boolean) => void
+  signingOut: boolean
+  handleSignOut: () => void
+}) {
+  const searchParams = useSearchParams()
 
-  // close drawer on route change
-  useEffect(() => { setOpen(false) }, [pathname])
-
-  // prevent body scroll when drawer open
-  useEffect(() => {
-    document.body.style.overflow = open ? 'hidden' : ''
-    return () => { document.body.style.overflow = '' }
-  }, [open])
-
-  async function handleSignOut() {
-    setSigningOut(true)
-    await signOut({ callbackUrl: '/login' })
+  function isActive(item: { href: string; exact: boolean }) {
+    const [itemPath, itemQuery] = item.href.split('?')
+    if (item.exact) return pathname === itemPath
+    if (pathname !== itemPath) return false
+    if (itemQuery) {
+      const [key, val] = itemQuery.split('=')
+      return searchParams.get(key) === val
+    }
+    return true
   }
 
-  const sidebarContent = (
+  const navLink = (item: { href: string; label: string; exact: boolean; icon: React.ReactNode }) => {
+    const active = isActive(item)
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        className={`flex items-center gap-3 px-3 rounded-lg text-sm transition-all ${
+          active
+            ? 'bg-white/6 text-zinc-100 font-medium'
+            : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/3'
+        }`}
+        style={{ ...(active ? { borderLeft: '2px solid #3b82f6', paddingLeft: '10px' } : {}), minHeight: '44px', display: 'flex', alignItems: 'center' }}
+      >
+        <span className={active ? 'text-blue-400' : 'text-zinc-600'}>{item.icon}</span>
+        {item.label}
+      </Link>
+    )
+  }
+
+  return (
     <>
       {/* Logo */}
       <div className="px-5 py-5 border-b border-[#1a1a1a] flex items-center justify-between">
@@ -127,7 +171,6 @@ export function Sidebar({ userName, userEmail, userImage, plan = 'free' }: Props
             beta
           </span>
         </div>
-        {/* Close button — mobile only */}
         <button
           className="lg:hidden text-zinc-500 hover:text-zinc-200 transition-colors p-1"
           onClick={() => setOpen(false)}
@@ -141,25 +184,21 @@ export function Sidebar({ userName, userEmail, userImage, plan = 'free' }: Props
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        {NAV.map((item) => {
-          const active = pathname === item.href
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3 px-3 rounded-lg text-sm transition-all ${
-                active
-                  ? 'bg-white/6 text-zinc-100 font-medium'
-                  : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/3'
-              }`}
-              style={{ ...(active ? { borderLeft: '2px solid #3b82f6', paddingLeft: '10px' } : {}), minHeight: '44px', display: 'flex', alignItems: 'center' }}
-            >
-              <span className={active ? 'text-blue-400' : 'text-zinc-600'}>{item.icon}</span>
-              {item.label}
-            </Link>
-          )
-        })}
+        {/* MEMORY API section */}
+        <div className="pb-1">
+          <p className="text-[10px] font-semibold text-blue-500/70 uppercase tracking-wider px-3 pb-1">Memory API</p>
+          <p className="text-[9px] text-zinc-700 px-3 pb-2">For AI apps you build</p>
+        </div>
+        {MEMORY_NAV.map(navLink)}
 
+        {/* MCP SERVER section */}
+        <div className="pt-4 pb-1">
+          <p className="text-[10px] font-semibold text-purple-500/70 uppercase tracking-wider px-3 pb-1">MCP Server</p>
+          <p className="text-[9px] text-zinc-700 px-3 pb-2">For VS Code AI tools</p>
+        </div>
+        {MCP_NAV.map(navLink)}
+
+        {/* Resources */}
         <div className="pt-5 pb-1">
           <p className="text-[10px] font-semibold text-zinc-700 uppercase tracking-wider px-3 pb-1">Resources</p>
         </div>
@@ -225,10 +264,30 @@ export function Sidebar({ userName, userEmail, userImage, plan = 'free' }: Props
       </div>
     </>
   )
+}
+
+function SidebarInner({ userName, userEmail, userImage, plan = 'free' }: Props) {
+  const pathname = usePathname()
+  const [signingOut, setSigningOut] = useState(false)
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => { setOpen(false) }, [pathname])
+
+  useEffect(() => {
+    document.body.style.overflow = open ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [open])
+
+  async function handleSignOut() {
+    setSigningOut(true)
+    await signOut({ callbackUrl: '/login' })
+  }
+
+  const navProps = { pathname, plan, userName, userEmail, userImage, open, setOpen, signingOut, handleSignOut }
 
   return (
     <>
-      {/* Hamburger — mobile only, fixed top-left */}
+      {/* Hamburger — mobile only */}
       <button
         className="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 flex items-center justify-center rounded-lg border border-[#1a1a1a] bg-black/90 text-zinc-400 hover:text-zinc-100 transition-colors"
         onClick={() => setOpen(true)}
@@ -241,7 +300,6 @@ export function Sidebar({ userName, userEmail, userImage, plan = 'free' }: Props
         </svg>
       </button>
 
-      {/* Backdrop — mobile only */}
       {open && (
         <div
           className="lg:hidden fixed inset-0 z-40 bg-black/70 backdrop-blur-sm"
@@ -249,19 +307,25 @@ export function Sidebar({ userName, userEmail, userImage, plan = 'free' }: Props
         />
       )}
 
-      {/* Desktop sidebar — always visible on lg+ */}
       <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-60 flex-col border-r border-[#1a1a1a] bg-[#030303]">
-        {sidebarContent}
+        <SidebarNav {...navProps} />
       </aside>
 
-      {/* Mobile drawer */}
       <aside
         className={`lg:hidden fixed left-0 top-0 h-screen w-72 flex flex-col border-r border-[#1a1a1a] bg-[#030303] z-50 transition-transform duration-300 ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {sidebarContent}
+        <SidebarNav {...navProps} />
       </aside>
     </>
+  )
+}
+
+export function Sidebar(props: Props) {
+  return (
+    <Suspense fallback={null}>
+      <SidebarInner {...props} />
+    </Suspense>
   )
 }

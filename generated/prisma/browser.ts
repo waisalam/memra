@@ -57,3 +57,13 @@ export type Contact = Prisma.ContactModel
  * 
  */
 export type ApiLog = Prisma.ApiLogModel
+/**
+ * Model ContextSession
+ * 
+ */
+export type ContextSession = Prisma.ContextSessionModel
+/**
+ * Model ApiUsage
+ * 
+ */
+export type ApiUsage = Prisma.ApiUsageModel

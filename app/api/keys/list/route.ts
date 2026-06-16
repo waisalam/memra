@@ -14,14 +14,17 @@ export async function GET(req: NextRequest) {
 
   const keys = await prisma.apiKey.findMany({
     where: { userId, isActive: true },
-    select: { id: true, key: true, name: true, createdAt: true, lastUsed: true },
+    select: { id: true, key: true, name: true, createdAt: true, lastUsed: true, keyType: true },
     orderBy: { createdAt: 'desc' },
   })
 
-  const masked = keys.map((k: typeof keys[number]) => ({
-    ...k,
-    key: `mk_live_${'*'.repeat(Math.max(0, k.key.length - 4))}${k.key.slice(-4)}`,
-  }))
+  const masked = keys.map((k: typeof keys[number]) => {
+    const prefix = k.key.startsWith('mk_mcp_') ? 'mk_mcp_' : k.key.startsWith('mk_mem_') ? 'mk_mem_' : 'mk_live_'
+    return {
+      ...k,
+      key: `${prefix}${'*'.repeat(Math.max(0, k.key.length - prefix.length - 4))}${k.key.slice(-4)}`,
+    }
+  })
 
   return Response.json({ keys: masked })
 }

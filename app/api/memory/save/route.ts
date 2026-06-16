@@ -26,6 +26,10 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: 'Invalid or missing API key' }, { status: 401 })
   }
 
+  if (validated.keyType !== 'memory') {
+    return Response.json({ error: 'Wrong API key type. Memory endpoints require a Memory key (mk_mem_...). Get one at: https://memra-rho.vercel.app/dashboard/keys', code: 'WRONG_KEY_TYPE' }, { status: 403 })
+  }
+
   const { accountId, plan } = validated
 
   const withinLimit = await checkMemoryLimit(accountId, plan)

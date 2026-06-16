@@ -58,7 +58,9 @@ export const ModelName = {
   ApiKey: 'ApiKey',
   Memory: 'Memory',
   Contact: 'Contact',
-  ApiLog: 'ApiLog'
+  ApiLog: 'ApiLog',
+  ContextSession: 'ContextSession',
+  ApiUsage: 'ApiUsage'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -133,6 +135,7 @@ export const ApiKeyScalarFieldEnum = {
   key: 'key',
   name: 'name',
   userId: 'userId',
+  keyType: 'keyType',
   createdAt: 'createdAt',
   lastUsed: 'lastUsed',
   isActive: 'isActive'
@@ -183,12 +186,46 @@ export const ApiLogScalarFieldEnum = {
 export type ApiLogScalarFieldEnum = (typeof ApiLogScalarFieldEnum)[keyof typeof ApiLogScalarFieldEnum]
 
 
+export const ContextSessionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  title: 'title',
+  tool: 'tool',
+  messages: 'messages',
+  summary: 'summary',
+  resumePrompt: 'resumePrompt',
+  tokenCount: 'tokenCount',
+  messageCount: 'messageCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ContextSessionScalarFieldEnum = (typeof ContextSessionScalarFieldEnum)[keyof typeof ContextSessionScalarFieldEnum]
+
+
+export const ApiUsageScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  month: 'month',
+  callCount: 'callCount'
+} as const
+
+export type ApiUsageScalarFieldEnum = (typeof ApiUsageScalarFieldEnum)[keyof typeof ApiUsageScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const QueryMode = {
@@ -205,4 +242,13 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 

@@ -16,11 +16,13 @@ model User {
   createdAt     DateTime  @default(now())
   plan          String    @default("free")
   memoriesCount Int       @default(0)
-  apiKeys       ApiKey[]
-  memories      Memory[]  @relation("MemoryAccount")
-  accounts      Account[]
-  sessions      Session[]
-  apiLogs       ApiLog[]
+  apiKeys          ApiKey[]
+  memories         Memory[]  @relation("MemoryAccount")
+  accounts         Account[]
+  sessions         Session[]
+  apiLogs          ApiLog[]
+  contextSessions  ContextSession[]
+  apiUsage         ApiUsage[]
 }
 
 model Account {
@@ -62,6 +64,7 @@ model ApiKey {
   key       String    @unique @default(cuid())
   name      String
   userId    String
+  keyType   String    @default("memory")
   user      User      @relation(fields: [userId], references: [id])
   createdAt DateTime  @default(now())
   lastUsed  DateTime?
@@ -109,4 +112,32 @@ model ApiLog {
 
   @@index([userId, createdAt])
   @@index([createdAt])
+}
+
+model ContextSession {
+  id           String   @id @default(cuid())
+  userId       String
+  title        String
+  tool         String   @default("other")
+  messages     Json
+  summary      String?  @db.Text
+  resumePrompt String?  @db.Text
+  tokenCount   Int      @default(0)
+  messageCount Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model ApiUsage {
+  id        String @id @default(cuid())
+  userId    String
+  month     String
+  callCount Int    @default(0)
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, month])
+  @@index([userId, month])
 }

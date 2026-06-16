@@ -4,6 +4,7 @@ import { PLAN_LIMITS, type Plan } from './plans'
 export type ValidatedKey = {
   accountId: string
   plan: Plan
+  keyType: 'memory' | 'mcp'
 }
 
 export async function validateApiKey(request: Request): Promise<ValidatedKey | null> {
@@ -15,6 +16,7 @@ export async function validateApiKey(request: Request): Promise<ValidatedKey | n
     select: {
       userId: true,
       id: true,
+      keyType: true,
       user: { select: { plan: true, memoriesCount: true } },
     },
   })
@@ -29,6 +31,7 @@ export async function validateApiKey(request: Request): Promise<ValidatedKey | n
   return {
     accountId: record.userId,
     plan: (record.user.plan ?? 'free') as Plan,
+    keyType: (record.keyType ?? 'memory') as 'memory' | 'mcp',
   }
 }
 

@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState, type ReactNode } from 'react'
 import { CodeBlock } from '@/components/ui/code-block'
 import { Badge } from '@/components/ui/badge'
@@ -205,6 +206,8 @@ const NAV_GROUPS = [
   },
 ]
 
+const MCP_LINK = '/docs/mcp'
+
 const ALL_IDS = NAV_GROUPS.flatMap(g => g.items.map(i => i.id))
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -332,6 +335,32 @@ export default function DocsContent() {
               </ul>
             </div>
           ))}
+
+          {/* MCP SERVER section */}
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-purple-700 mb-2 px-2">
+              MCP Server
+            </p>
+            <ul className="space-y-0.5">
+              <li>
+                <Link
+                  href={MCP_LINK}
+                  className="flex items-center gap-1.5 w-full px-2 py-1.5 rounded text-sm text-zinc-500 hover:text-purple-400 hover:bg-purple-500/5 transition-colors"
+                >
+                  MCP Docs
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 leading-none">NEW</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/dashboard/keys?type=mcp"
+                  className="w-full px-2 py-1.5 rounded text-sm text-zinc-500 hover:text-purple-400 hover:bg-purple-500/5 transition-colors block"
+                >
+                  Get MCP key →
+                </Link>
+              </li>
+            </ul>
+          </div>
         </nav>
       </aside>
 

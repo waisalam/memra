@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 
 interface Key {
   id: string
@@ -10,6 +11,7 @@ interface Key {
   createdAt: Date
   lastUsed: Date | null
   isActive: boolean
+  keyType: 'memory' | 'mcp'
 }
 
 function timeAgo(date: Date | null) {
@@ -56,31 +58,57 @@ function CountdownTimer({ seconds, onExpire }: { seconds: number; onExpire: () =
   )
 }
 
-export function KeysClient({ initialKeys, userId, keyLimit }: { initialKeys: Key[]; userId: string; keyLimit: number }) {
+export function KeysClient({
+  initialKeys,
+  userId,
+  keyLimit,
+  initialTab = 'memory',
+}: {
+  initialKeys: Key[]
+  userId: string
+  keyLimit: number
+  initialTab?: 'memory' | 'mcp'
+}) {
+  const router = useRouter()
   const [keys, setKeys] = useState<Key[]>(initialKeys)
-  // session-only store: keyId → plaintext key
   const [sessionKeys, setSessionKeys] = useState<Record<string, string>>({})
+  const [activeTab, setActiveTab] = useState<'memory' | 'mcp'>(initialTab)
 
   const [showModal, setShowModal] = useState(false)
   const [keyName, setKeyName] = useState('')
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
-  const [modalKey, setModalKey] = useState<string | null>(null)       // plaintext key shown in modal
-  const [modalKeyId, setModalKeyId] = useState<string | null>(null)   // which key row triggered modal
+  const [modalKey, setModalKey] = useState<string | null>(null)
+  const [modalKeyId, setModalKeyId] = useState<string | null>(null)
+  const [modalKeyType, setModalKeyType] = useState<'memory' | 'mcp'>('memory')
   const [copied, setCopied] = useState(false)
   const [keyExpired, setKeyExpired] = useState(false)
 
   const [revokeId, setRevokeId] = useState<string | null>(null)
   const [revoking, setRevoking] = useState<string | null>(null)
   const [regeneratingId, setRegeneratingId] = useState<string | null>(null)
-
-  // expanded row on mobile
   const [expandedId, setExpandedId] = useState<string | null>(null)
+
+  function switchTab(tab: 'memory' | 'mcp') {
+    setActiveTab(tab)
+    router.push(`/dashboard/keys?type=${tab}`, { scroll: false })
+  }
+
+  const visibleKeys = keys.filter((k) => k.keyType === activeTab)
+  const activeVisible = visibleKeys.filter((k) => k.isActive)
+  const atKeyLimit = keyLimit !== (Infinity as number) && activeVisible.length >= keyLimit
+  const limitLabel = keyLimit === Infinity ? '∞' : keyLimit
+
+  function maskKey(plainKey: string, type: 'memory' | 'mcp') {
+    const prefix = type === 'mcp' ? 'mk_mcp_' : 'mk_mem_'
+    return `${prefix}${'•'.repeat(Math.max(0, plainKey.length - prefix.length - 4))}${plainKey.slice(-4)}`
+  }
 
   function openCreateModal() {
     setShowModal(true)
     setModalKey(null)
     setModalKeyId(null)
+    setModalKeyType(activeTab)
     setKeyName('')
     setKeyExpired(false)
     setCopied(false)
@@ -95,7 +123,7 @@ export function KeysClient({ initialKeys, userId, keyLimit }: { initialKeys: Key
       const res = await fetch('/api/keys/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, name: keyName.trim() }),
+        body: JSON.stringify({ userId, name: keyName.trim(), keyType: activeTab }),
       })
       const data = await res.json()
       if (res.status === 429) {
@@ -104,7 +132,8 @@ export function KeysClient({ initialKeys, userId, keyLimit }: { initialKeys: Key
       }
       if (data.apiKey) {
         const plainKey = data.apiKey.key
-        const masked = `mk_live_${'•'.repeat(Math.max(0, plainKey.length - 4))}${plainKey.slice(-4)}`
+        const keyType = (data.apiKey.keyType ?? activeTab) as 'memory' | 'mcp'
+        const masked = maskKey(plainKey, keyType)
         const newKeyRow: Key = {
           id: data.apiKey.id,
           key: plainKey,
@@ -113,11 +142,13 @@ export function KeysClient({ initialKeys, userId, keyLimit }: { initialKeys: Key
           createdAt: data.apiKey.createdAt,
           lastUsed: null,
           isActive: true,
+          keyType,
         }
         setKeys((prev) => [newKeyRow, ...prev])
         setSessionKeys((prev) => ({ ...prev, [data.apiKey.id]: plainKey }))
         setModalKey(plainKey)
         setModalKeyId(data.apiKey.id)
+        setModalKeyType(keyType)
         setKeyExpired(false)
         setCopied(false)
         setKeyName('')
@@ -142,15 +173,13 @@ export function KeysClient({ initialKeys, userId, keyLimit }: { initialKeys: Key
     setKeyName('')
   }
 
-  function handleKeyExpire() {
-    setKeyExpired(true)
-  }
-
   function revealKey(id: string) {
     const plain = sessionKeys[id]
     if (!plain) return
+    const k = keys.find((k) => k.id === id)
     setModalKey(plain)
     setModalKeyId(id)
+    setModalKeyType(k?.keyType ?? 'memory')
     setKeyExpired(false)
     setCopied(false)
     setShowModal(true)
@@ -172,10 +201,9 @@ export function KeysClient({ initialKeys, userId, keyLimit }: { initialKeys: Key
     }
   }
 
-  async function revokeAndRegenerate(id: string, name: string) {
+  async function revokeAndRegenerate(id: string, name: string, keyType: 'memory' | 'mcp') {
     setRegeneratingId(id)
     try {
-      // revoke old
       await fetch('/api/keys/revoke', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
@@ -184,16 +212,16 @@ export function KeysClient({ initialKeys, userId, keyLimit }: { initialKeys: Key
       setKeys((prev) => prev.map((k) => k.id === id ? { ...k, isActive: false } : k))
       setSessionKeys((prev) => { const n = { ...prev }; delete n[id]; return n })
 
-      // create new with same name
       const res = await fetch('/api/keys/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, name }),
+        body: JSON.stringify({ userId, name, keyType }),
       })
       const data = await res.json()
       if (data.apiKey) {
         const plainKey = data.apiKey.key
-        const masked = `mk_live_${'•'.repeat(Math.max(0, plainKey.length - 4))}${plainKey.slice(-4)}`
+        const newType = (data.apiKey.keyType ?? keyType) as 'memory' | 'mcp'
+        const masked = maskKey(plainKey, newType)
         const newKeyRow: Key = {
           id: data.apiKey.id,
           key: plainKey,
@@ -202,11 +230,13 @@ export function KeysClient({ initialKeys, userId, keyLimit }: { initialKeys: Key
           createdAt: data.apiKey.createdAt,
           lastUsed: null,
           isActive: true,
+          keyType: newType,
         }
         setKeys((prev) => [newKeyRow, ...prev])
         setSessionKeys((prev) => ({ ...prev, [data.apiKey.id]: plainKey }))
         setModalKey(plainKey)
         setModalKeyId(data.apiKey.id)
+        setModalKeyType(newType)
         setKeyExpired(false)
         setCopied(false)
         setShowModal(true)
@@ -216,18 +246,71 @@ export function KeysClient({ initialKeys, userId, keyLimit }: { initialKeys: Key
     }
   }
 
-  const activeKeys = keys.filter((k) => k.isActive)
-  const revokedKeys = keys.filter((k) => !k.isActive)
-  const atKeyLimit = keyLimit !== Infinity && activeKeys.length >= keyLimit
-  const limitLabel = keyLimit === Infinity ? '∞' : keyLimit
+  const tabLabel = activeTab === 'mcp' ? 'MCP' : 'Memory'
+  const revokedVisible = visibleKeys.filter((k) => !k.isActive)
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      {/* Tab bar */}
+      <div className="flex border-b border-[#1e1e1e]">
+        {(['memory', 'mcp'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => switchTab(tab)}
+            className={`px-4 py-3 text-sm font-medium transition-colors relative ${
+              activeTab === tab
+                ? 'text-zinc-100'
+                : 'text-zinc-500 hover:text-zinc-300'
+            }`}
+          >
+            {tab === 'memory' ? '🧠 Memory Keys' : '🤖 MCP Keys'}
+            <span className="ml-1.5 text-[10px] font-mono text-zinc-600">
+              {tab === 'memory' ? '(mk_mem_...)' : '(mk_mcp_...)'}
+            </span>
+            {activeTab === tab && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-t" />
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* MCP setup card */}
+      {activeTab === 'mcp' && (
+        <div
+          className="rounded-2xl border p-4 space-y-3"
+          style={{ background: 'rgba(139,92,246,0.04)', borderColor: 'rgba(139,92,246,0.2)' }}
+        >
+          <div className="flex items-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            <span className="text-xs font-semibold text-purple-400">Quick Setup</span>
+          </div>
+          <p className="text-xs text-zinc-400">Add this to your Claude Code / Cursor / Windsurf MCP config:</p>
+          <pre className="text-xs font-mono text-zinc-300 bg-black/40 rounded-lg p-3 overflow-x-auto border border-zinc-800">
+{`{
+  "mcpServers": {
+    "memra": {
+      "command": "node",
+      "args": ["/path/to/memra/mcp-server/dist/index.js"],
+      "env": { "MEMRA_API_KEY": "mk_mcp_your_key" }
+    }
+  }
+}`}
+          </pre>
+          <p className="text-xs text-zinc-600">Replace <span className="text-zinc-400 font-mono">/path/to/memra</span> with the full path to this project on your machine.</p>
+          <a href="/docs/mcp" className="inline-flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 transition-colors">
+            See full setup guide →
+          </a>
+        </div>
+      )}
+
+      {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-zinc-100">API Keys</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-zinc-100">{tabLabel} Keys</h1>
           <p className="text-zinc-500 text-sm mt-1">
-            {activeKeys.length} / {limitLabel} active keys
+            {activeVisible.length} / {limitLabel} active keys
           </p>
         </div>
         {atKeyLimit ? (
@@ -246,19 +329,19 @@ export function KeysClient({ initialKeys, userId, keyLimit }: { initialKeys: Key
           <button
             onClick={openCreateModal}
             className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-all hover:opacity-90 shrink-0"
-            style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', minHeight: '44px' }}
+            style={{ background: activeTab === 'mcp' ? 'linear-gradient(135deg, #7c3aed, #8b5cf6)' : 'linear-gradient(135deg, #3b82f6, #8b5cf6)', minHeight: '44px' }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
             </svg>
-            <span className="hidden sm:inline">Create new key</span>
+            <span className="hidden sm:inline">Create {tabLabel} key</span>
             <span className="sm:hidden">New key</span>
           </button>
         )}
       </div>
 
       {/* Keys table */}
-      {activeKeys.length === 0 && revokedKeys.length === 0 ? (
+      {activeVisible.length === 0 && revokedVisible.length === 0 ? (
         <div className="rounded-2xl border border-[#1e1e1e] py-16 text-center space-y-4" style={{ background: 'rgba(255,255,255,0.02)' }}>
           <div className="w-12 h-12 rounded-xl bg-zinc-800 flex items-center justify-center mx-auto">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-zinc-600">
@@ -266,20 +349,23 @@ export function KeysClient({ initialKeys, userId, keyLimit }: { initialKeys: Key
             </svg>
           </div>
           <div>
-            <p className="text-zinc-300 font-medium">No API keys yet</p>
-            <p className="text-zinc-600 text-sm mt-1">Create your first API key to start using Memra</p>
+            <p className="text-zinc-300 font-medium">No {tabLabel} keys yet</p>
+            <p className="text-zinc-600 text-sm mt-1">
+              {activeTab === 'mcp'
+                ? 'Create an MCP key to use Memra in Claude Code, Cursor, or Windsurf'
+                : 'Create a Memory key to start building AI apps with persistent memory'}
+            </p>
           </div>
           <button
             onClick={openCreateModal}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-white"
-            style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', minHeight: '44px' }}
+            style={{ background: activeTab === 'mcp' ? 'linear-gradient(135deg, #7c3aed, #8b5cf6)' : 'linear-gradient(135deg, #3b82f6, #8b5cf6)', minHeight: '44px' }}
           >
-            Create API key
+            Create {tabLabel} key
           </button>
         </div>
       ) : (
         <div className="rounded-2xl border border-[#1e1e1e] overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)' }}>
-          {/* Warning banner */}
           <div className="px-5 py-3 bg-amber-500/5 border-b border-amber-500/10 flex items-center gap-2">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2" className="shrink-0">
               <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
@@ -300,7 +386,7 @@ export function KeysClient({ initialKeys, userId, keyLimit }: { initialKeys: Key
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1a1a1a]">
-                {keys.map((k) => (
+                {visibleKeys.map((k) => (
                   <tr key={k.id} className={`transition-colors ${k.isActive ? 'hover:bg-white/2' : 'opacity-50'}`}>
                     <td className="px-5 py-3.5 font-medium text-zinc-300 whitespace-nowrap">{k.name}</td>
                     <td className="px-5 py-3.5">
@@ -340,7 +426,7 @@ export function KeysClient({ initialKeys, userId, keyLimit }: { initialKeys: Key
                                 Revoke
                               </button>
                               <button
-                                onClick={() => revokeAndRegenerate(k.id, k.name)}
+                                onClick={() => revokeAndRegenerate(k.id, k.name, k.keyType)}
                                 disabled={regeneratingId === k.id}
                                 className="text-xs text-zinc-500 hover:text-blue-400 transition-colors whitespace-nowrap"
                                 style={{ minHeight: '44px' }}
@@ -360,7 +446,7 @@ export function KeysClient({ initialKeys, userId, keyLimit }: { initialKeys: Key
 
           {/* Mobile card list */}
           <div className="sm:hidden divide-y divide-[#1a1a1a]">
-            {keys.map((k) => (
+            {visibleKeys.map((k) => (
               <div key={k.id} className={k.isActive ? '' : 'opacity-50'}>
                 <button
                   className="w-full px-4 py-3.5 flex items-center justify-between text-left hover:bg-white/2 transition-colors"
@@ -390,7 +476,7 @@ export function KeysClient({ initialKeys, userId, keyLimit }: { initialKeys: Key
                     {k.isActive && (
                       <div className="flex gap-2 pt-1">
                         <button
-                          onClick={() => revokeAndRegenerate(k.id, k.name)}
+                          onClick={() => revokeAndRegenerate(k.id, k.name, k.keyType)}
                           disabled={regeneratingId === k.id}
                           className="flex-1 py-2.5 rounded-lg text-xs font-medium text-white text-center"
                           style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', minHeight: '44px' }}
@@ -428,7 +514,7 @@ export function KeysClient({ initialKeys, userId, keyLimit }: { initialKeys: Key
           <div className="w-full max-w-md rounded-2xl border border-[#2a2a2a] p-6 space-y-5" style={{ background: '#0a0a0a' }}>
             <div className="flex items-center justify-between">
               <h2 className="text-base font-semibold text-zinc-100">
-                {modalKey ? 'API key created' : 'Create API key'}
+                {modalKey ? `${modalKeyType === 'mcp' ? 'MCP' : 'Memory'} key created` : `Create ${tabLabel} key`}
               </h2>
               <button onClick={closeModal} className="text-zinc-600 hover:text-zinc-300 transition-colors p-1" style={{ minHeight: '44px', minWidth: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -439,7 +525,19 @@ export function KeysClient({ initialKeys, userId, keyLimit }: { initialKeys: Key
 
             {modalKey ? (
               <div className="space-y-4">
-                {/* Countdown + key display */}
+                {/* Key type badge */}
+                <div className="flex items-center gap-2">
+                  <span
+                    className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"
+                    style={modalKeyType === 'mcp'
+                      ? { background: 'rgba(139,92,246,0.15)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.3)' }
+                      : { background: 'rgba(59,130,246,0.15)', color: '#60a5fa', border: '1px solid rgba(59,130,246,0.3)' }
+                    }
+                  >
+                    {modalKeyType === 'mcp' ? 'MCP KEY' : 'MEMORY KEY'}
+                  </span>
+                </div>
+
                 <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-emerald-400 text-sm font-medium">
@@ -449,14 +547,14 @@ export function KeysClient({ initialKeys, userId, keyLimit }: { initialKeys: Key
                       {keyExpired ? 'Key hidden for security' : 'Copy your key now'}
                     </div>
                     {!keyExpired && (
-                      <CountdownTimer seconds={60} onExpire={handleKeyExpire} />
+                      <CountdownTimer seconds={60} onExpire={() => setKeyExpired(true)} />
                     )}
                   </div>
 
                   {keyExpired ? (
                     <div className="rounded-lg bg-zinc-900/80 border border-zinc-800 px-3 py-4 text-center space-y-2">
                       <p className="text-xs text-zinc-500">Key hidden after 60 seconds.</p>
-                      <p className="text-xs text-amber-400">If you didn't copy it, use "Revoke &amp; Regenerate" to get a new one.</p>
+                      <p className="text-xs text-amber-400">If you didn&apos;t copy it, use &quot;Revoke &amp; Regenerate&quot; to get a new one.</p>
                     </div>
                   ) : (
                     <>
@@ -480,14 +578,13 @@ export function KeysClient({ initialKeys, userId, keyLimit }: { initialKeys: Key
                   )}
                 </div>
 
-                {/* Revoke & regenerate from modal */}
                 {keyExpired && modalKeyId && (
                   <button
                     onClick={() => {
-                      const key = keys.find((k) => k.id === modalKeyId)
-                      if (!key) return
+                      const k = keys.find((k) => k.id === modalKeyId)
+                      if (!k) return
                       closeModal()
-                      revokeAndRegenerate(modalKeyId, key.name)
+                      revokeAndRegenerate(modalKeyId, k.name, k.keyType)
                     }}
                     className="w-full py-3 rounded-lg text-sm font-medium text-white transition-all hover:opacity-90"
                     style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', minHeight: '44px' }}
@@ -510,7 +607,7 @@ export function KeysClient({ initialKeys, userId, keyLimit }: { initialKeys: Key
                   <label className="text-xs text-zinc-500 mb-1.5 block">Key name</label>
                   <input
                     type="text"
-                    placeholder="e.g. Production, Development"
+                    placeholder={activeTab === 'mcp' ? 'e.g. Claude Code, Cursor' : 'e.g. Production, Development'}
                     value={keyName}
                     onChange={(e) => setKeyName(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && createKey()}
@@ -540,9 +637,9 @@ export function KeysClient({ initialKeys, userId, keyLimit }: { initialKeys: Key
                     onClick={createKey}
                     disabled={creating || !keyName.trim()}
                     className="flex-1 py-2.5 rounded-lg text-sm font-medium text-white transition-all hover:opacity-90 disabled:opacity-50"
-                    style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', minHeight: '44px' }}
+                    style={{ background: activeTab === 'mcp' ? 'linear-gradient(135deg, #7c3aed, #8b5cf6)' : 'linear-gradient(135deg, #3b82f6, #8b5cf6)', minHeight: '44px' }}
                   >
-                    {creating ? 'Creating…' : 'Create key'}
+                    {creating ? 'Creating…' : `Create ${tabLabel} key`}
                   </button>
                 </div>
               </div>

@@ -1,0 +1,38 @@
+{
+ "name": "@memra-client/mcp-server",
+  "version": "0.1.2",
+  "description": "Persistent memory for Claude Code, Cursor, and Windsurf — never lose context again",
+  "main": "dist/index.js",
+  "bin": {
+    "memra-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "memory",
+    "ai",
+    "claude",
+    "cursor",
+    "windsurf",
+    "context",
+    "agents",
+    "memra"
+  ],
+  "license": "MIT",
+  "homepage": "https://memra-rho.vercel.app"
+}

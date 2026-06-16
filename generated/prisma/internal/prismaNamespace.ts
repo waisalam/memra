@@ -391,7 +391,9 @@ export const ModelName = {
   ApiKey: 'ApiKey',
   Memory: 'Memory',
   Contact: 'Contact',
-  ApiLog: 'ApiLog'
+  ApiLog: 'ApiLog',
+  ContextSession: 'ContextSession',
+  ApiUsage: 'ApiUsage'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -407,7 +409,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "account" | "session" | "verificationToken" | "apiKey" | "memory" | "contact" | "apiLog"
+    modelProps: "user" | "account" | "session" | "verificationToken" | "apiKey" | "memory" | "contact" | "apiLog" | "contextSession" | "apiUsage"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1003,6 +1005,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ContextSession: {
+      payload: Prisma.$ContextSessionPayload<ExtArgs>
+      fields: Prisma.ContextSessionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ContextSessionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContextSessionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ContextSessionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContextSessionPayload>
+        }
+        findFirst: {
+          args: Prisma.ContextSessionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContextSessionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ContextSessionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContextSessionPayload>
+        }
+        findMany: {
+          args: Prisma.ContextSessionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContextSessionPayload>[]
+        }
+        create: {
+          args: Prisma.ContextSessionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContextSessionPayload>
+        }
+        createMany: {
+          args: Prisma.ContextSessionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ContextSessionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContextSessionPayload>[]
+        }
+        delete: {
+          args: Prisma.ContextSessionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContextSessionPayload>
+        }
+        update: {
+          args: Prisma.ContextSessionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContextSessionPayload>
+        }
+        deleteMany: {
+          args: Prisma.ContextSessionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ContextSessionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ContextSessionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContextSessionPayload>[]
+        }
+        upsert: {
+          args: Prisma.ContextSessionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContextSessionPayload>
+        }
+        aggregate: {
+          args: Prisma.ContextSessionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateContextSession>
+        }
+        groupBy: {
+          args: Prisma.ContextSessionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ContextSessionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ContextSessionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ContextSessionCountAggregateOutputType> | number
+        }
+      }
+    }
+    ApiUsage: {
+      payload: Prisma.$ApiUsagePayload<ExtArgs>
+      fields: Prisma.ApiUsageFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ApiUsageFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiUsagePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ApiUsageFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiUsagePayload>
+        }
+        findFirst: {
+          args: Prisma.ApiUsageFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiUsagePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ApiUsageFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiUsagePayload>
+        }
+        findMany: {
+          args: Prisma.ApiUsageFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiUsagePayload>[]
+        }
+        create: {
+          args: Prisma.ApiUsageCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiUsagePayload>
+        }
+        createMany: {
+          args: Prisma.ApiUsageCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ApiUsageCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiUsagePayload>[]
+        }
+        delete: {
+          args: Prisma.ApiUsageDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiUsagePayload>
+        }
+        update: {
+          args: Prisma.ApiUsageUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiUsagePayload>
+        }
+        deleteMany: {
+          args: Prisma.ApiUsageDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ApiUsageUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ApiUsageUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiUsagePayload>[]
+        }
+        upsert: {
+          args: Prisma.ApiUsageUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiUsagePayload>
+        }
+        aggregate: {
+          args: Prisma.ApiUsageAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateApiUsage>
+        }
+        groupBy: {
+          args: Prisma.ApiUsageGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ApiUsageGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ApiUsageCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ApiUsageCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1098,6 +1248,7 @@ export const ApiKeyScalarFieldEnum = {
   key: 'key',
   name: 'name',
   userId: 'userId',
+  keyType: 'keyType',
   createdAt: 'createdAt',
   lastUsed: 'lastUsed',
   isActive: 'isActive'
@@ -1148,12 +1299,46 @@ export const ApiLogScalarFieldEnum = {
 export type ApiLogScalarFieldEnum = (typeof ApiLogScalarFieldEnum)[keyof typeof ApiLogScalarFieldEnum]
 
 
+export const ContextSessionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  title: 'title',
+  tool: 'tool',
+  messages: 'messages',
+  summary: 'summary',
+  resumePrompt: 'resumePrompt',
+  tokenCount: 'tokenCount',
+  messageCount: 'messageCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ContextSessionScalarFieldEnum = (typeof ContextSessionScalarFieldEnum)[keyof typeof ContextSessionScalarFieldEnum]
+
+
+export const ApiUsageScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  month: 'month',
+  callCount: 'callCount'
+} as const
+
+export type ApiUsageScalarFieldEnum = (typeof ApiUsageScalarFieldEnum)[keyof typeof ApiUsageScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const QueryMode = {
@@ -1170,6 +1355,15 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 
 
 
@@ -1224,6 +1418,20 @@ export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
  * Reference to a field of type 'Boolean'
  */
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+/**
+ * Reference to a field of type 'Json'
+ */
+export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+/**
+ * Reference to a field of type 'QueryMode'
+ */
+export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
     
 
 
@@ -1358,6 +1566,8 @@ export type GlobalOmitConfig = {
   memory?: Prisma.MemoryOmit
   contact?: Prisma.ContactOmit
   apiLog?: Prisma.ApiLogOmit
+  contextSession?: Prisma.ContextSessionOmit
+  apiUsage?: Prisma.ApiUsageOmit
 }
 
 /* Types for Logging */

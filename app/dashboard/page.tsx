@@ -9,7 +9,7 @@ async function getDashboardData(accountId: string) {
   const todayStart = new Date()
   todayStart.setHours(0, 0, 0, 0)
 
-  const [totalMemories, apiKeys, userGroups, apiCallsToday, recentLogs] = await Promise.all([
+  const [totalMemories, apiKeys, userGroups, apiCallsToday, recentLogs, mcpSessionCount] = await Promise.all([
     prisma.memory.count({ where: { accountId } }),
     prisma.apiKey.findMany({
       where: { userId: accountId, isActive: true },
@@ -30,9 +30,10 @@ async function getDashboardData(accountId: string) {
       take: 10,
       select: { id: true, endpoint: true, method: true, agentId: true, statusCode: true, latencyMs: true, createdAt: true },
     }),
+    prisma.contextSession.count({ where: { userId: accountId } }),
   ])
 
-  return { totalMemories, apiKeys, agentCount: userGroups.length, apiCallsToday, recentLogs }
+  return { totalMemories, apiKeys, agentCount: userGroups.length, apiCallsToday, recentLogs, mcpSessionCount }
 }
 
 function timeAgo(date: Date) {
@@ -146,6 +147,63 @@ const { context } = await memory.getContext('user_123', query)`
       <div>
         <h1 className="text-2xl font-bold text-zinc-100">Overview</h1>
         <p className="text-zinc-500 text-sm mt-1">Your Memra account at a glance</p>
+      </div>
+
+      {/* Two product cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Memory API */}
+        <a
+          href="/dashboard/keys?type=memory"
+          className="rounded-2xl border p-5 space-y-4 transition-all hover:border-blue-500/30 group"
+          style={{ background: '#040d1a', borderColor: '#1e3a5f' }}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest text-blue-400" style={{ background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.2)' }}>
+              Memory API
+            </span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" className="opacity-0 group-hover:opacity-100 transition-opacity">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </div>
+          <div>
+            <p className="text-zinc-100 font-semibold">For AI apps you build</p>
+            <p className="text-zinc-500 text-xs mt-1">Save and retrieve conversation memory from your own AI applications via API.</p>
+          </div>
+          <div className="flex items-end justify-between">
+            <div>
+              <p className="text-2xl font-bold text-zinc-100 tabular-nums">{data.totalMemories}</p>
+              <p className="text-xs text-zinc-600">memories stored</p>
+            </div>
+            <code className="text-[10px] text-blue-400/60 font-mono">mk_mem_...</code>
+          </div>
+        </a>
+
+        {/* MCP Server */}
+        <a
+          href="/dashboard/mcp"
+          className="rounded-2xl border p-5 space-y-4 transition-all hover:border-purple-500/30 group"
+          style={{ background: '#0a0418', borderColor: '#3b1f6b' }}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest text-purple-400" style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.2)' }}>
+              MCP Server
+            </span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" className="opacity-0 group-hover:opacity-100 transition-opacity">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </div>
+          <div>
+            <p className="text-zinc-100 font-semibold">For VS Code AI tools</p>
+            <p className="text-zinc-500 text-xs mt-1">Save context from Claude Code, Cursor, or Windsurf and resume any session seamlessly.</p>
+          </div>
+          <div className="flex items-end justify-between">
+            <div>
+              <p className="text-2xl font-bold text-zinc-100 tabular-nums">{data.mcpSessionCount}</p>
+              <p className="text-xs text-zinc-600">sessions saved</p>
+            </div>
+            <code className="text-[10px] text-purple-400/60 font-mono">mk_mcp_...</code>
+          </div>
+        </a>
       </div>
 
       {/* Stats */}
