@@ -151,6 +151,27 @@ const recent = await memory.getHistory('user_abc123', {
   limit: 20,       // just the last 20
 })`
 
+const HISTORY_API_ROUTE_CODE = `// app/api/history/route.ts — API route to fetch chat history
+import { NextResponse } from 'next/server'
+import MemoryClient from '@memra-client/client'
+
+const client = new MemoryClient({
+  apiKey: process.env.MEMRA_API_KEY || '',
+})
+
+export async function GET() {
+  // Returns ALL messages for this user, oldest first
+  const { history, total } = await client.getHistory('user_123', {
+    order: 'asc',
+  })
+  return NextResponse.json({ history, total })
+}
+
+// Then in your frontend:
+// const res = await fetch('/api/history')
+// const { history, total } = await res.json()
+// history.forEach(msg => renderMessage(msg.role, msg.content))`
+
 const FORGET_SIG_CODE = `memory.forget(
   userId: string,
   options?: {
@@ -719,10 +740,16 @@ export default function DocsContent() {
           <SectionH3>Example</SectionH3>
           <CodeBlock code={HISTORY_EXAMPLE_CODE} language="ts" />
 
+          <SectionH3>Real-world usage — API route for chat history</SectionH3>
+          <p className="text-zinc-500 text-xs leading-relaxed mb-4">
+            Create an API route in your app that fetches a user&apos;s complete chat history. Your frontend calls this to display past conversations — like a chat sidebar or message list.
+          </p>
+          <CodeBlock code={HISTORY_API_ROUTE_CODE} language="ts" filename="app/api/history/route.ts" />
+
           <Callout type="tip">
-            <code className="text-sky-300">getHistory()</code> is for your UI — showing users their past conversations.{' '}
-            <code className="text-sky-300">getContext()</code> is for the AI — giving it the right memories before it responds.
-            They serve different purposes.
+            <strong>You don&apos;t need your own database for chat storage.</strong> Memra stores every message when you call{' '}
+            <code className="text-sky-300">save()</code>. Call <code className="text-sky-300">getHistory()</code> to get them all back — sorted, filtered, and ready to display.
+            Use <code className="text-sky-300">getContext()</code> separately before AI responses to inject the right memories into the prompt.
           </Callout>
         </section>
 
