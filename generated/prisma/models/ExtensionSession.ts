@@ -322,11 +322,11 @@ export type ExtensionSessionOrderByWithRelationInput = {
 
 export type ExtensionSessionWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  sessionHash?: string
   AND?: Prisma.ExtensionSessionWhereInput | Prisma.ExtensionSessionWhereInput[]
   OR?: Prisma.ExtensionSessionWhereInput[]
   NOT?: Prisma.ExtensionSessionWhereInput | Prisma.ExtensionSessionWhereInput[]
   accountId?: Prisma.StringFilter<"ExtensionSession"> | string
+  sessionHash?: Prisma.StringFilter<"ExtensionSession"> | string
   tool?: Prisma.StringFilter<"ExtensionSession"> | string
   title?: Prisma.StringFilter<"ExtensionSession"> | string
   projectId?: Prisma.StringNullableFilter<"ExtensionSession"> | string | null
@@ -341,7 +341,7 @@ export type ExtensionSessionWhereUniqueInput = Prisma.AtLeast<{
   lastSavedAt?: Prisma.DateTimeFilter<"ExtensionSession"> | Date | string
   account?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   extensionMessages?: Prisma.ExtensionMessageListRelationFilter
-}, "id" | "sessionHash">
+}, "id">
 
 export type ExtensionSessionOrderByWithAggregationInput = {
   id?: Prisma.SortOrder

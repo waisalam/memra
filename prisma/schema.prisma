@@ -146,7 +146,7 @@ model ApiUsage {
 model ExtensionSession {
   id             String             @id @default(cuid())
   accountId      String
-  sessionHash    String             @unique
+  sessionHash    String
   tool           String
   title          String
   projectId      String?

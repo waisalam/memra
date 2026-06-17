@@ -38,8 +38,8 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: 'tool and sessionHash are required' }, { status: 400 })
   }
 
-  const existing = await prisma.extensionSession.findUnique({
-    where: { sessionHash },
+  const existing = await prisma.extensionSession.findFirst({
+    where: { sessionHash, accountId, isActive: true },
   })
 
   if (existing) {
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     return Response.json({
       sessionId: existing.id,
       isNew: false,
-      resumePrompt: existing.resumePrompt,
+      resumePrompt: null,
     })
   }
 
