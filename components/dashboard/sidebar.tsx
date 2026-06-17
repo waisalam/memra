@@ -44,10 +44,10 @@ const MEMORY_NAV = [
   },
 ]
 
-const MCP_NAV = [
+const EXTENSION_NAV = [
   {
-    href: '/dashboard/keys?type=mcp',
-    label: 'MCP Keys',
+    href: '/dashboard/keys?type=extension',
+    label: 'Extension Keys',
     exact: false,
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -57,18 +57,18 @@ const MCP_NAV = [
     ),
   },
   {
-    href: '/dashboard/mcp',
-    label: 'MCP Sessions',
+    href: '/dashboard/extension',
+    label: 'Extension Sessions',
     exact: false,
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <polyline points="22,12 18,12 15,21 9,3 6,12 2,12" />
+        <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />
       </svg>
     ),
   },
   {
-    href: '/docs/mcp',
-    label: 'MCP Docs',
+    href: '/docs/extension',
+    label: 'Extension Docs',
     exact: false,
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -191,12 +191,15 @@ function SidebarNav({ pathname, plan, userName, userEmail, userImage, open, setO
         </div>
         {MEMORY_NAV.map(navLink)}
 
-        {/* MCP SERVER section */}
+        {/* VS CODE EXTENSION section */}
         <div className="pt-4 pb-1">
-          <p className="text-[10px] font-semibold text-purple-500/70 uppercase tracking-wider px-3 pb-1">MCP Server</p>
-          <p className="text-[9px] text-zinc-700 px-3 pb-2">For VS Code AI tools</p>
+          <div className="flex items-center gap-2 px-3 pb-1">
+            <p className="text-[10px] font-semibold text-emerald-500/70 uppercase tracking-wider">Extension</p>
+            <span className="text-[8px] font-bold px-1 py-0.5 rounded text-amber-400 bg-amber-500/10 border border-amber-500/20 uppercase">Soon</span>
+          </div>
+          <p className="text-[9px] text-zinc-700 px-3 pb-2">VS Code AI sessions</p>
         </div>
-        {MCP_NAV.map(navLink)}
+        {EXTENSION_NAV.map(navLink)}
 
         {/* Resources */}
         <div className="pt-5 pb-1">

@@ -91,3 +91,13 @@ export type ContextSession = Prisma.ContextSessionModel
  * 
  */
 export type ApiUsage = Prisma.ApiUsageModel
+/**
+ * Model ExtensionSession
+ * 
+ */
+export type ExtensionSession = Prisma.ExtensionSessionModel
+/**
+ * Model ExtensionMessage
+ * 
+ */
+export type ExtensionMessage = Prisma.ExtensionMessageModel

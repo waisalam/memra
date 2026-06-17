@@ -17,6 +17,11 @@ const PLANS = [
       { text: 'Priority support', ok: false },
       { text: 'Custom retention', ok: false },
     ],
+    extensionFeatures: [
+      { text: '10 extension sessions', ok: true },
+      { text: '100 messages/session', ok: true },
+      { text: 'AI resume prompts', ok: false },
+    ],
     cta: 'Start free',
     ctaStyle: 'border',
     popular: false,
@@ -34,6 +39,11 @@ const PLANS = [
       { text: 'Priority support', ok: true },
       { text: '90-day retention', ok: true },
     ],
+    extensionFeatures: [
+      { text: 'Unlimited extension sessions', ok: true },
+      { text: '10,000 messages/session', ok: true },
+      { text: 'AI resume prompts', ok: true },
+    ],
     cta: 'Coming soon',
     ctaStyle: 'gradient',
     popular: true,
@@ -50,6 +60,10 @@ const PLANS = [
       { text: 'Dedicated support', ok: true },
       { text: 'Custom retention', ok: true },
       { text: 'SSO', ok: true },
+    ],
+    extensionFeatures: [
+      { text: 'Unlimited everything', ok: true },
+      { text: 'AI resume prompts', ok: true },
     ],
     cta: 'Contact us',
     ctaStyle: 'border',
@@ -150,6 +164,7 @@ export function Pricing({ ctaHref = '/login' }: { ctaHref?: string }) {
               </div>
 
               <ul className="space-y-2.5">
+                <li className="text-[10px] font-semibold text-blue-400/60 uppercase tracking-wider pb-0.5">Memory API</li>
                 {plan.features.map((f) => (
                   <li key={f.text} className={`flex items-center gap-2.5 text-sm ${f.ok ? 'text-zinc-300' : 'text-zinc-700'}`}>
                     <span className={`shrink-0 ${f.ok ? 'text-emerald-400' : 'text-zinc-700'}`}>
@@ -159,6 +174,23 @@ export function Pricing({ ctaHref = '/login' }: { ctaHref?: string }) {
                   </li>
                 ))}
               </ul>
+
+              {'extensionFeatures' in plan && (
+                <ul className="space-y-2.5 pt-2 border-t border-zinc-800/60">
+                  <li className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider pb-0.5">
+                    <span className="text-emerald-400/60">VS Code Extension</span>
+                    <span className="text-[8px] font-bold px-1 py-0.5 rounded text-amber-400 bg-amber-500/10 border border-amber-500/20 normal-case">Coming Soon</span>
+                  </li>
+                  {plan.extensionFeatures.map((f: { text: string; ok: boolean }) => (
+                    <li key={f.text} className={`flex items-center gap-2.5 text-sm ${f.ok ? 'text-zinc-300' : 'text-zinc-700'}`}>
+                      <span className={`shrink-0 ${f.ok ? 'text-emerald-400' : 'text-zinc-700'}`}>
+                        {f.ok ? '✓' : '✗'}
+                      </span>
+                      {f.text}
+                    </li>
+                  ))}
+                </ul>
+              )}
 
               {'comingSoon' in plan ? (
                 <div

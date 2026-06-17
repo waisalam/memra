@@ -9,7 +9,7 @@ async function getDashboardData(accountId: string) {
   const todayStart = new Date()
   todayStart.setHours(0, 0, 0, 0)
 
-  const [totalMemories, apiKeys, userGroups, apiCallsToday, recentLogs, mcpSessionCount] = await Promise.all([
+  const [totalMemories, apiKeys, userGroups, apiCallsToday, recentLogs, extensionSessionCount] = await Promise.all([
     prisma.memory.count({ where: { accountId } }),
     prisma.apiKey.findMany({
       where: { userId: accountId, isActive: true },
@@ -30,10 +30,10 @@ async function getDashboardData(accountId: string) {
       take: 10,
       select: { id: true, endpoint: true, method: true, agentId: true, statusCode: true, latencyMs: true, createdAt: true },
     }),
-    prisma.contextSession.count({ where: { userId: accountId } }),
+    prisma.extensionSession.count({ where: { accountId } }),
   ])
 
-  return { totalMemories, apiKeys, agentCount: userGroups.length, apiCallsToday, recentLogs, mcpSessionCount }
+  return { totalMemories, apiKeys, agentCount: userGroups.length, apiCallsToday, recentLogs, extensionSessionCount }
 }
 
 function timeAgo(date: Date) {
@@ -149,7 +149,7 @@ const { context } = await memory.getContext('user_123', query)`
         <p className="text-zinc-500 text-sm mt-1">Your Memra account at a glance</p>
       </div>
 
-      {/* Two product cards */}
+      {/* Product cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Memory API */}
         <a
@@ -178,30 +178,35 @@ const { context } = await memory.getContext('user_123', query)`
           </div>
         </a>
 
-        {/* MCP Server */}
+        {/* VS Code Extension */}
         <a
-          href="/dashboard/mcp"
-          className="rounded-2xl border p-5 space-y-4 transition-all hover:border-purple-500/30 group"
-          style={{ background: '#0a0418', borderColor: '#3b1f6b' }}
+          href="/dashboard/extension"
+          className="rounded-2xl border p-5 space-y-4 transition-all hover:border-emerald-500/30 group"
+          style={{ background: '#041a0f', borderColor: '#1e5f3a' }}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest text-purple-400" style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.2)' }}>
-              MCP Server
-            </span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" className="opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest text-emerald-400" style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.2)' }}>
+                Extension
+              </span>
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-amber-400 bg-amber-500/10 border border-amber-500/20">
+                COMING SOON
+              </span>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2" className="opacity-0 group-hover:opacity-100 transition-opacity">
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
           </div>
           <div>
-            <p className="text-zinc-100 font-semibold">For VS Code AI tools</p>
-            <p className="text-zinc-500 text-xs mt-1">Save context from Claude Code, Cursor, or Windsurf and resume any session seamlessly.</p>
+            <p className="text-zinc-100 font-semibold">VS Code Extension</p>
+            <p className="text-zinc-500 text-xs mt-1">Auto-captures every AI chat session in VS Code. Zero setup.</p>
           </div>
           <div className="flex items-end justify-between">
             <div>
-              <p className="text-2xl font-bold text-zinc-100 tabular-nums">{data.mcpSessionCount}</p>
-              <p className="text-xs text-zinc-600">sessions saved</p>
+              <p className="text-2xl font-bold text-zinc-100 tabular-nums">{data.extensionSessionCount}</p>
+              <p className="text-xs text-zinc-600">sessions captured</p>
             </div>
-            <code className="text-[10px] text-purple-400/60 font-mono">mk_mcp_...</code>
+            <code className="text-[10px] text-emerald-400/60 font-mono">mk_ext_...</code>
           </div>
         </a>
       </div>

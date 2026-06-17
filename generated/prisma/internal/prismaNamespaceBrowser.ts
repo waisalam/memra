@@ -60,7 +60,9 @@ export const ModelName = {
   Contact: 'Contact',
   ApiLog: 'ApiLog',
   ContextSession: 'ContextSession',
-  ApiUsage: 'ApiUsage'
+  ApiUsage: 'ApiUsage',
+  ExtensionSession: 'ExtensionSession',
+  ExtensionMessage: 'ExtensionMessage'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -211,6 +213,41 @@ export const ApiUsageScalarFieldEnum = {
 } as const
 
 export type ApiUsageScalarFieldEnum = (typeof ApiUsageScalarFieldEnum)[keyof typeof ApiUsageScalarFieldEnum]
+
+
+export const ExtensionSessionScalarFieldEnum = {
+  id: 'id',
+  accountId: 'accountId',
+  sessionHash: 'sessionHash',
+  tool: 'tool',
+  title: 'title',
+  projectId: 'projectId',
+  workspacePath: 'workspacePath',
+  messages: 'messages',
+  messageCount: 'messageCount',
+  tokenCount: 'tokenCount',
+  summary: 'summary',
+  resumePrompt: 'resumePrompt',
+  isActive: 'isActive',
+  startedAt: 'startedAt',
+  lastSavedAt: 'lastSavedAt'
+} as const
+
+export type ExtensionSessionScalarFieldEnum = (typeof ExtensionSessionScalarFieldEnum)[keyof typeof ExtensionSessionScalarFieldEnum]
+
+
+export const ExtensionMessageScalarFieldEnum = {
+  id: 'id',
+  sessionId: 'sessionId',
+  accountId: 'accountId',
+  role: 'role',
+  content: 'content',
+  tool: 'tool',
+  tokens: 'tokens',
+  savedAt: 'savedAt'
+} as const
+
+export type ExtensionMessageScalarFieldEnum = (typeof ExtensionMessageScalarFieldEnum)[keyof typeof ExtensionMessageScalarFieldEnum]
 
 
 export const SortOrder = {

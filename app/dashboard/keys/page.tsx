@@ -15,7 +15,7 @@ async function getKeys(userId: string) {
 }
 
 function maskKey(key: string, keyType: string) {
-  const prefix = keyType === 'mcp' ? 'mk_mcp_' : key.startsWith('mk_mem_') ? 'mk_mem_' : 'mk_mem_'
+  const prefix = keyType === 'extension' ? 'mk_ext_' : keyType === 'mcp' ? 'mk_mcp_' : 'mk_mem_'
   return `${prefix}${'•'.repeat(Math.max(0, key.length - prefix.length - 4))}${key.slice(-4)}`
 }
 
@@ -24,7 +24,7 @@ export default async function KeysPage(props: { searchParams: Promise<{ type?: s
   if (!session) redirect('/login')
 
   const sp = await props.searchParams
-  const initialTab = sp.type === 'mcp' ? 'mcp' : 'memory'
+  const initialTab = sp.type === 'extension' ? 'extension' : 'memory'
 
   const keys = await getKeys(session.user.id)
   const plan = (session.user.plan ?? 'free') as Plan
@@ -33,7 +33,7 @@ export default async function KeysPage(props: { searchParams: Promise<{ type?: s
   return (
     <KeysClient
       initialKeys={keys.map((k) => {
-        const kt = (k.keyType ?? 'memory') as 'memory' | 'mcp'
+        const kt = (k.keyType ?? 'memory') as 'memory' | 'mcp' | 'extension'
         return {
           ...k,
           keyType: kt,

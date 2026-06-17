@@ -9,6 +9,8 @@ import { CodeShowcase } from '@/components/landing/code-showcase'
 import { Pricing } from '@/components/landing/pricing'
 import { Stats } from '@/components/landing/stats'
 import { TwoProducts } from '@/components/landing/two-products'
+import { HowExtensionWorks } from '@/components/landing/how-extension-works'
+import { Waitlist } from '@/components/landing/waitlist'
 import Link from 'next/link'
 import { auth } from '@/auth'
 
@@ -30,8 +32,10 @@ export default async function LandingPage() {
       <ProblemSolution />
       <Features />
       <TwoProducts />
+      <HowExtensionWorks />
       <CodeShowcase />
       <Pricing ctaHref={ctaHref} />
+      <Waitlist />
       <Stats />
 
       {/* Final CTA */}

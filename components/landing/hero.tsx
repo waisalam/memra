@@ -81,7 +81,7 @@ export function Hero({ ctaHref = '/login' }: { ctaHref?: string }) {
   useEffect(() => { setMounted(true) }, [])
 
   return (
-    <section className="relative min-h-screen flex items-center pt-16 overflow-hidden">
+    <section className="relative flex items-center pt-20 pb-16 overflow-hidden">
       {/* Background blobs */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] rounded-full opacity-10"
@@ -116,8 +116,8 @@ export function Hero({ ctaHref = '/login' }: { ctaHref?: string }) {
 
           {/* Subheadline */}
           <p className="text-lg text-zinc-400 leading-relaxed max-w-xl">
-            Memra adds persistent semantic memory to any AI agent or chatbot with a single API call.
-            No more context loss. No more users repeating themselves.
+            Memra gives your AI a permanent memory — whether you&apos;re building AI apps with our API
+            or using AI tools in VS Code with our extension.
           </p>
 
           {/* CTAs */}
@@ -143,15 +143,41 @@ export function Hero({ ctaHref = '/login' }: { ctaHref?: string }) {
             </Link>
           </div>
 
-          {/* Social proof */}
-          <div className="pt-2">
-            <p className="text-xs text-zinc-600 mb-3">Trusted by developers building the next generation of AI</p>
-            <div className="flex flex-wrap gap-3">
-              {['YC Startup', 'AI Agent Co', 'DevTools Inc', 'LLM Labs'].map((name) => (
-                <div key={name} className="px-3 py-1.5 rounded-lg border border-zinc-800 text-xs text-zinc-700 bg-zinc-900/40">
-                  {name}
+          {/* Two products */}
+          <div className="pt-2 space-y-3">
+            <p className="text-xs text-zinc-600 uppercase tracking-wider font-semibold">Two products, one platform</p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link
+                href="/dashboard/keys?type=memory"
+                className="flex items-center gap-3 px-4 py-3 rounded-xl border transition-all hover:border-blue-500/40 group"
+                style={{ borderColor: '#1e3a5f', background: '#040d1a' }}
+              >
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'rgba(59,130,246,0.12)' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="1.8">
+                    <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v6c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/>
+                  </svg>
                 </div>
-              ))}
+                <div>
+                  <p className="text-sm font-semibold text-zinc-200 group-hover:text-white">Memory API</p>
+                  <p className="text-[11px] text-zinc-600">For AI apps you build</p>
+                </div>
+                <code className="text-[10px] text-blue-400/50 font-mono ml-auto hidden sm:block">mk_mem_</code>
+              </Link>
+              <div
+                className="flex items-center gap-3 px-4 py-3 rounded-xl border"
+                style={{ borderColor: '#1e5f3a', background: '#041a0f' }}
+              >
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'rgba(16,185,129,0.12)' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="1.8">
+                    <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-zinc-200">VS Code Extension</p>
+                  <p className="text-[11px] text-zinc-600">Auto-captures AI chats</p>
+                </div>
+                <span className="text-[8px] font-bold px-1.5 py-0.5 rounded text-amber-400 bg-amber-500/10 border border-amber-500/20 ml-auto shrink-0">SOON</span>
+              </div>
             </div>
           </div>
         </div>

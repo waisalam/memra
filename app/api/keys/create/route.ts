@@ -8,7 +8,7 @@ export const runtime = 'nodejs'
 export async function POST(req: NextRequest) {
   const body = await req.json()
   const { userId, name = 'Default Key', keyType: rawKeyType } = body
-  const keyType = rawKeyType === 'mcp' ? 'mcp' : 'memory'
+  const keyType = rawKeyType === 'mcp' ? 'mcp' : rawKeyType === 'extension' ? 'extension' : 'memory'
 
   if (!userId) {
     return Response.json({ error: 'userId is required' }, { status: 400 })
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const prefix = keyType === 'mcp' ? 'mk_mcp_' : 'mk_mem_'
+  const prefix = keyType === 'mcp' ? 'mk_mcp_' : keyType === 'extension' ? 'mk_ext_' : 'mk_mem_'
   const rawKey = `${prefix}${crypto.randomUUID().replace(/-/g, '')}`
 
   const apiKey = await prisma.apiKey.create({

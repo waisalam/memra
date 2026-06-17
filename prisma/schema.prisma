@@ -23,6 +23,7 @@ model User {
   apiLogs          ApiLog[]
   contextSessions  ContextSession[]
   apiUsage         ApiUsage[]
+  extensionSessions ExtensionSession[] @relation("ExtensionSessions")
 }
 
 model Account {
@@ -140,4 +141,44 @@ model ApiUsage {
 
   @@unique([userId, month])
   @@index([userId, month])
+}
+
+model ExtensionSession {
+  id             String             @id @default(cuid())
+  accountId      String
+  sessionHash    String             @unique
+  tool           String
+  title          String
+  projectId      String?
+  workspacePath  String?
+  messages       Json
+  messageCount   Int                @default(0)
+  tokenCount     Int                @default(0)
+  summary        String?            @db.Text
+  resumePrompt   String?            @db.Text
+  isActive       Boolean            @default(true)
+  startedAt      DateTime           @default(now())
+  lastSavedAt    DateTime           @updatedAt
+  account        User               @relation("ExtensionSessions", fields: [accountId], references: [id])
+  extensionMessages ExtensionMessage[]
+
+  @@index([accountId, lastSavedAt])
+  @@index([accountId, isActive])
+  @@index([accountId, projectId])
+  @@index([sessionHash])
+}
+
+model ExtensionMessage {
+  id        String           @id @default(cuid())
+  sessionId String
+  accountId String
+  role      String
+  content   String           @db.Text
+  tool      String
+  tokens    Int              @default(0)
+  savedAt   DateTime         @default(now())
+  session   ExtensionSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([accountId, savedAt])
 }

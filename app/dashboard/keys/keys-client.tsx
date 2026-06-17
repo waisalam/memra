@@ -11,7 +11,7 @@ interface Key {
   createdAt: Date
   lastUsed: Date | null
   isActive: boolean
-  keyType: 'memory' | 'mcp'
+  keyType: 'memory' | 'mcp' | 'extension'
 }
 
 function timeAgo(date: Date | null) {
@@ -67,12 +67,12 @@ export function KeysClient({
   initialKeys: Key[]
   userId: string
   keyLimit: number
-  initialTab?: 'memory' | 'mcp'
+  initialTab?: 'memory' | 'mcp' | 'extension'
 }) {
   const router = useRouter()
   const [keys, setKeys] = useState<Key[]>(initialKeys)
   const [sessionKeys, setSessionKeys] = useState<Record<string, string>>({})
-  const [activeTab, setActiveTab] = useState<'memory' | 'mcp'>(initialTab)
+  const [activeTab, setActiveTab] = useState<'memory' | 'mcp' | 'extension'>(initialTab)
 
   const [showModal, setShowModal] = useState(false)
   const [keyName, setKeyName] = useState('')
@@ -80,7 +80,7 @@ export function KeysClient({
   const [createError, setCreateError] = useState<string | null>(null)
   const [modalKey, setModalKey] = useState<string | null>(null)
   const [modalKeyId, setModalKeyId] = useState<string | null>(null)
-  const [modalKeyType, setModalKeyType] = useState<'memory' | 'mcp'>('memory')
+  const [modalKeyType, setModalKeyType] = useState<'memory' | 'mcp' | 'extension'>('memory')
   const [copied, setCopied] = useState(false)
   const [keyExpired, setKeyExpired] = useState(false)
 
@@ -89,7 +89,7 @@ export function KeysClient({
   const [regeneratingId, setRegeneratingId] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
-  function switchTab(tab: 'memory' | 'mcp') {
+  function switchTab(tab: 'memory' | 'mcp' | 'extension') {
     setActiveTab(tab)
     router.push(`/dashboard/keys?type=${tab}`, { scroll: false })
   }
@@ -99,8 +99,8 @@ export function KeysClient({
   const atKeyLimit = keyLimit !== (Infinity as number) && activeVisible.length >= keyLimit
   const limitLabel = keyLimit === Infinity ? '∞' : keyLimit
 
-  function maskKey(plainKey: string, type: 'memory' | 'mcp') {
-    const prefix = type === 'mcp' ? 'mk_mcp_' : 'mk_mem_'
+  function maskKey(plainKey: string, type: 'memory' | 'mcp' | 'extension') {
+    const prefix = type === 'extension' ? 'mk_ext_' : type === 'mcp' ? 'mk_mcp_' : 'mk_mem_'
     return `${prefix}${'•'.repeat(Math.max(0, plainKey.length - prefix.length - 4))}${plainKey.slice(-4)}`
   }
 
@@ -201,7 +201,7 @@ export function KeysClient({
     }
   }
 
-  async function revokeAndRegenerate(id: string, name: string, keyType: 'memory' | 'mcp') {
+  async function revokeAndRegenerate(id: string, name: string, keyType: 'memory' | 'mcp' | 'extension') {
     setRegeneratingId(id)
     try {
       await fetch('/api/keys/revoke', {
@@ -246,14 +246,14 @@ export function KeysClient({
     }
   }
 
-  const tabLabel = activeTab === 'mcp' ? 'MCP' : 'Memory'
+  const tabLabel = activeTab === 'extension' ? 'Extension' : 'Memory'
   const revokedVisible = visibleKeys.filter((k) => !k.isActive)
 
   return (
     <div className="space-y-6">
       {/* Tab bar */}
       <div className="flex border-b border-[#1e1e1e]">
-        {(['memory', 'mcp'] as const).map((tab) => (
+        {(['memory', 'extension'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => switchTab(tab)}
@@ -263,9 +263,9 @@ export function KeysClient({
                 : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >
-            {tab === 'memory' ? '🧠 Memory Keys' : '🤖 MCP Keys'}
+            {tab === 'memory' ? '🧠 Memory Keys' : '🔌 Extension Keys'}
             <span className="ml-1.5 text-[10px] font-mono text-zinc-600">
-              {tab === 'memory' ? '(mk_mem_...)' : '(mk_mcp_...)'}
+              {tab === 'memory' ? '(mk_mem_...)' : '(mk_ext_...)'}
             </span>
             {activeTab === tab && (
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-t" />
@@ -274,34 +274,19 @@ export function KeysClient({
         ))}
       </div>
 
-      {/* MCP setup card */}
-      {activeTab === 'mcp' && (
+      {/* Extension setup card */}
+      {activeTab === 'extension' && (
         <div
           className="rounded-2xl border p-4 space-y-3"
-          style={{ background: 'rgba(139,92,246,0.04)', borderColor: 'rgba(139,92,246,0.2)' }}
+          style={{ background: 'rgba(16,185,129,0.04)', borderColor: 'rgba(16,185,129,0.2)' }}
         >
           <div className="flex items-center gap-2">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2">
               <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
             </svg>
-            <span className="text-xs font-semibold text-purple-400">Quick Setup</span>
+            <span className="text-xs font-semibold text-emerald-400">VS Code Extension</span>
           </div>
-          <p className="text-xs text-zinc-400">Add this to your Claude Code / Cursor / Windsurf MCP config:</p>
-          <pre className="text-xs font-mono text-zinc-300 bg-black/40 rounded-lg p-3 overflow-x-auto border border-zinc-800">
-{`{
-  "mcpServers": {
-    "memra": {
-      "command": "node",
-      "args": ["/path/to/memra/mcp-server/dist/index.js"],
-      "env": { "MEMRA_API_KEY": "mk_mcp_your_key" }
-    }
-  }
-}`}
-          </pre>
-          <p className="text-xs text-zinc-600">Replace <span className="text-zinc-400 font-mono">/path/to/memra</span> with the full path to this project on your machine.</p>
-          <a href="/docs/mcp" className="inline-flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 transition-colors">
-            See full setup guide →
-          </a>
+          <p className="text-xs text-zinc-400">Use this key in the Memra VS Code Extension settings. The extension will automatically capture your AI chat sessions and save them to Memra.</p>
         </div>
       )}
 
@@ -329,7 +314,7 @@ export function KeysClient({
           <button
             onClick={openCreateModal}
             className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-all hover:opacity-90 shrink-0"
-            style={{ background: activeTab === 'mcp' ? 'linear-gradient(135deg, #7c3aed, #8b5cf6)' : 'linear-gradient(135deg, #3b82f6, #8b5cf6)', minHeight: '44px' }}
+            style={{ background: activeTab === 'extension' ? 'linear-gradient(135deg, #059669, #10b981)' : 'linear-gradient(135deg, #3b82f6, #8b5cf6)', minHeight: '44px' }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -351,15 +336,15 @@ export function KeysClient({
           <div>
             <p className="text-zinc-300 font-medium">No {tabLabel} keys yet</p>
             <p className="text-zinc-600 text-sm mt-1">
-              {activeTab === 'mcp'
-                ? 'Create an MCP key to use Memra in Claude Code, Cursor, or Windsurf'
+              {activeTab === 'extension'
+                ? 'Create an Extension key to use with the Memra VS Code Extension'
                 : 'Create a Memory key to start building AI apps with persistent memory'}
             </p>
           </div>
           <button
             onClick={openCreateModal}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-white"
-            style={{ background: activeTab === 'mcp' ? 'linear-gradient(135deg, #7c3aed, #8b5cf6)' : 'linear-gradient(135deg, #3b82f6, #8b5cf6)', minHeight: '44px' }}
+            style={{ background: activeTab === 'extension' ? 'linear-gradient(135deg, #059669, #10b981)' : 'linear-gradient(135deg, #3b82f6, #8b5cf6)', minHeight: '44px' }}
           >
             Create {tabLabel} key
           </button>
@@ -514,7 +499,7 @@ export function KeysClient({
           <div className="w-full max-w-md rounded-2xl border border-[#2a2a2a] p-6 space-y-5" style={{ background: '#0a0a0a' }}>
             <div className="flex items-center justify-between">
               <h2 className="text-base font-semibold text-zinc-100">
-                {modalKey ? `${modalKeyType === 'mcp' ? 'MCP' : 'Memory'} key created` : `Create ${tabLabel} key`}
+                {modalKey ? `${modalKeyType === 'extension' ? 'Extension' : 'Memory'} key created` : `Create ${tabLabel} key`}
               </h2>
               <button onClick={closeModal} className="text-zinc-600 hover:text-zinc-300 transition-colors p-1" style={{ minHeight: '44px', minWidth: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -529,12 +514,12 @@ export function KeysClient({
                 <div className="flex items-center gap-2">
                   <span
                     className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"
-                    style={modalKeyType === 'mcp'
-                      ? { background: 'rgba(139,92,246,0.15)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.3)' }
+                    style={modalKeyType === 'extension'
+                      ? { background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }
                       : { background: 'rgba(59,130,246,0.15)', color: '#60a5fa', border: '1px solid rgba(59,130,246,0.3)' }
                     }
                   >
-                    {modalKeyType === 'mcp' ? 'MCP KEY' : 'MEMORY KEY'}
+                    {modalKeyType === 'extension' ? 'EXTENSION KEY' : 'MEMORY KEY'}
                   </span>
                 </div>
 
@@ -607,7 +592,7 @@ export function KeysClient({
                   <label className="text-xs text-zinc-500 mb-1.5 block">Key name</label>
                   <input
                     type="text"
-                    placeholder={activeTab === 'mcp' ? 'e.g. Claude Code, Cursor' : 'e.g. Production, Development'}
+                    placeholder={activeTab === 'extension' ? 'e.g. VS Code, Work Laptop' : 'e.g. Production, Development'}
                     value={keyName}
                     onChange={(e) => setKeyName(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && createKey()}
@@ -637,7 +622,7 @@ export function KeysClient({
                     onClick={createKey}
                     disabled={creating || !keyName.trim()}
                     className="flex-1 py-2.5 rounded-lg text-sm font-medium text-white transition-all hover:opacity-90 disabled:opacity-50"
-                    style={{ background: activeTab === 'mcp' ? 'linear-gradient(135deg, #7c3aed, #8b5cf6)' : 'linear-gradient(135deg, #3b82f6, #8b5cf6)', minHeight: '44px' }}
+                    style={{ background: activeTab === 'extension' ? 'linear-gradient(135deg, #059669, #10b981)' : 'linear-gradient(135deg, #3b82f6, #8b5cf6)', minHeight: '44px' }}
                   >
                     {creating ? 'Creating…' : `Create ${tabLabel} key`}
                   </button>
