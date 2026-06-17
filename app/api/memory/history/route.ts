@@ -30,16 +30,36 @@ export async function GET(req: NextRequest) {
   const { accountId } = validated
 
   const { searchParams } = req.nextUrl
-  const userId = searchParams.get('userId') ?? undefined
-  const limit = parseInt(searchParams.get('limit') ?? '20', 10)
+  const userId = searchParams.get('userId') ?? 'default'
+  const agentId = searchParams.get('agentId')
+  const limitParam = searchParams.get('limit')
+  const before = searchParams.get('before')
+  const after = searchParams.get('after')
+  const order = searchParams.get('order') === 'desc' ? 'desc' : 'asc' as const
 
-  const history = await prisma.memory.findMany({
-    where: { accountId, ...(userId ? { userId } : {}) },
-    orderBy: { createdAt: 'asc' },
-    take: limit,
+  const where: Record<string, unknown> = { accountId, userId }
+  if (agentId) where.agentId = agentId
+  if (before) where.createdAt = { ...(where.createdAt as object ?? {}), lt: new Date(before) }
+  if (after) where.createdAt = { ...(where.createdAt as object ?? {}), gt: new Date(after) }
+
+  const findArgs: Record<string, unknown> = {
+    where,
+    orderBy: { createdAt: order },
     select: { id: true, content: true, role: true, userId: true, agentId: true, createdAt: true },
-  })
+  }
+  if (limitParam) {
+    findArgs.take = parseInt(limitParam, 10)
+  }
 
-  logCall(accountId, userId ?? null, 200, Date.now() - start)
-  return Response.json({ history, count: history.length })
+  const [history, total] = await Promise.all([
+    prisma.memory.findMany(findArgs as Parameters<typeof prisma.memory.findMany>[0]),
+    prisma.memory.count({ where: { accountId, userId, ...(agentId ? { agentId } : {}) } }),
+  ])
+
+  logCall(accountId, userId, 200, Date.now() - start)
+  return Response.json({
+    history,
+    total,
+    count: history.length,
+  })
 }

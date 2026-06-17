@@ -163,8 +163,11 @@ export function Hero({ ctaHref = '/login' }: { ctaHref?: string }) {
                 </div>
                 <code className="text-[10px] text-blue-400/50 font-mono ml-auto hidden sm:block">mk_mem_</code>
               </Link>
-              <div
-                className="flex items-center gap-3 px-4 py-3 rounded-xl border"
+              <a
+                href="https://marketplace.visualstudio.com/items?itemName=memra.memra"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-4 py-3 rounded-xl border transition-all hover:border-emerald-500/40 group"
                 style={{ borderColor: '#1e5f3a', background: '#041a0f' }}
               >
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'rgba(16,185,129,0.12)' }}>
@@ -173,11 +176,11 @@ export function Hero({ ctaHref = '/login' }: { ctaHref?: string }) {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-zinc-200">VS Code Extension</p>
+                  <p className="text-sm font-semibold text-zinc-200 group-hover:text-white">VS Code Extension</p>
                   <p className="text-[11px] text-zinc-600">Auto-captures AI chats</p>
                 </div>
-                <span className="text-[8px] font-bold px-1.5 py-0.5 rounded text-amber-400 bg-amber-500/10 border border-amber-500/20 ml-auto shrink-0">SOON</span>
-              </div>
+                <span className="text-[8px] font-bold px-1.5 py-0.5 rounded text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 ml-auto shrink-0">NEW</span>
+              </a>
             </div>
           </div>
         </div>

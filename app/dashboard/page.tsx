@@ -189,9 +189,6 @@ const { context } = await memory.getContext('user_123', query)`
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest text-emerald-400" style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.2)' }}>
                 Extension
               </span>
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-amber-400 bg-amber-500/10 border border-amber-500/20">
-                COMING SOON
-              </span>
             </div>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2" className="opacity-0 group-hover:opacity-100 transition-opacity">
               <path d="M5 12h14M12 5l7 7-7 7"/>

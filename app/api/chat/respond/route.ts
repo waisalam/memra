@@ -5,20 +5,28 @@ export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {
   const start = Date.now()
-  const { userMessage, context = [], history = [] } = await req.json()
+  const { userMessage, context = [], recentHistory = [], history = [] } = await req.json()
 
   if (!userMessage) {
     return Response.json({ error: 'userMessage is required' }, { status: 400 })
   }
 
-  const systemPrompt = `You are a helpful AI assistant with memory.
-${
-  context.length > 0
-    ? `Here is relevant context from past conversations:\n${context
-        .map((m: { role: string; content: string }) => `- ${m.role}: ${m.content}`)
-        .join('\n')}\nUse this to personalize your response.`
-    : 'No previous context available.'
-}`
+  let memorySection = ''
+
+  if (recentHistory.length > 0) {
+    memorySection += `Here is the recent conversation history (chronological order):\n${recentHistory
+      .map((m: { role: string; content: string }) => `[${m.role}]: ${m.content}`)
+      .join('\n')}\n\n`
+  }
+
+  if (context.length > 0) {
+    memorySection += `Here are relevant memories from older conversations:\n${context
+      .map((m: { role: string; content: string }) => `- ${m.role}: ${m.content}`)
+      .join('\n')}\n\n`
+  }
+
+  const systemPrompt = `You are a helpful AI assistant with memory. You remember everything the user has told you across all conversations.
+${memorySection ? `${memorySection}Use ALL of this context — both recent history and older memories — to give accurate, personalized responses. If the user asks about something they told you before, refer to it directly.` : 'No previous context available.'}`
 
   const messages = [
     { role: 'system', content: systemPrompt },

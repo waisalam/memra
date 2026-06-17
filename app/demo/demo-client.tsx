@@ -142,9 +142,10 @@ export function DemoClient({
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [retrievedContext, setRetrievedContext] = useState<MemoryItem[]>([])
+  const [recentHistory, setRecentHistory] = useState<MemoryItem[]>([])
   const [contextOpen, setContextOpen] = useState(false)
   const [memories, setMemories] = useState<MemoryItem[]>([])
-  const [memoryView, setMemoryView] = useState<'context' | 'history' | null>(null)
+  const [memoryView, setMemoryView] = useState<'context' | 'recent' | 'history' | null>(null)
   const [totalSaved, setTotalSaved] = useState(0)
   const [lastLatency, setLastLatency] = useState<number | null>(null)
   const [lastProvider, setLastProvider] = useState<string | null>(null)
@@ -218,12 +219,12 @@ export function DemoClient({
   const fetchTotalSaved = useCallback(async () => {
     if (!config.apiKey || !config.userId) return
     const res = await fetch(
-      `/api/memory/history?userId=${encodeURIComponent(config.userId)}&agentId=${encodeURIComponent(config.agentId)}&limit=100`,
+      `/api/memory/history?userId=${encodeURIComponent(config.userId)}&agentId=${encodeURIComponent(config.agentId)}&limit=1`,
       { headers: { 'x-api-key': config.apiKey } }
     )
     if (res.ok) {
       const data = await res.json()
-      setTotalSaved(data.count ?? 0)
+      setTotalSaved(data.total ?? 0)
     }
   }, [config])
 
@@ -288,16 +289,19 @@ export function DemoClient({
 
     try {
       let contextItems: MemoryItem[] = []
+      let recentItems: MemoryItem[] = []
 
       if (hasCreds) {
         const ctxRes = await fetch(
-          `/api/memory/context?userId=${encodeURIComponent(config.userId)}&agentId=${encodeURIComponent(config.agentId)}&query=${encodeURIComponent(userMsg)}&limit=5`,
+          `/api/memory/context?userId=${encodeURIComponent(config.userId)}&agentId=${encodeURIComponent(config.agentId)}&query=${encodeURIComponent(userMsg)}&limit=5&recentLimit=10`,
           { headers: { 'x-api-key': config.apiKey } }
         )
-        const ctxData = ctxRes.ok ? await ctxRes.json() : { context: [] }
-        contextItems = ctxData.context ?? []
+        const ctxData = ctxRes.ok ? await ctxRes.json() : { context: [], recentHistory: [], relevantMemories: [] }
+        contextItems = ctxData.relevantMemories ?? ctxData.context ?? []
+        recentItems = ctxData.recentHistory ?? []
         setRetrievedContext(contextItems)
-        if (contextItems.length > 0) setContextOpen(true)
+        setRecentHistory(recentItems)
+        if (contextItems.length > 0 || recentItems.length > 0) setContextOpen(true)
       }
 
       const chatRes = await fetch('/api/chat/respond', {
@@ -306,6 +310,7 @@ export function DemoClient({
         body: JSON.stringify({
           userMessage: userMsg,
           context: contextItems,
+          recentHistory: recentItems,
           agentId: config.agentId,
           history: messages.slice(-5).map((m) => ({ role: m.role, content: m.content })),
         }),
@@ -373,7 +378,7 @@ export function DemoClient({
   async function viewHistory() {
     if (!config.apiKey || !config.userId) { pushToast('error', 'Configure API key and User ID first'); return }
     const res = await fetch(
-      `/api/memory/history?userId=${encodeURIComponent(config.userId)}&agentId=${encodeURIComponent(config.agentId)}&limit=30`,
+      `/api/memory/history?userId=${encodeURIComponent(config.userId)}&agentId=${encodeURIComponent(config.agentId)}`,
       { headers: { 'x-api-key': config.apiKey } }
     )
     if (res.ok) {
@@ -382,6 +387,23 @@ export function DemoClient({
       setMemoryView('history')
     } else {
       pushToast('error', 'Failed to fetch history')
+    }
+  }
+
+  async function viewRecent() {
+    if (!config.apiKey || !config.userId) { pushToast('error', 'Configure API key and User ID first'); return }
+    const lastUser = [...messages].reverse().find((m) => m.role === 'user')
+    const query = lastUser?.content ?? 'recent conversation'
+    const res = await fetch(
+      `/api/memory/context?userId=${encodeURIComponent(config.userId)}&agentId=${encodeURIComponent(config.agentId)}&query=${encodeURIComponent(query)}&limit=5&recentLimit=20`,
+      { headers: { 'x-api-key': config.apiKey } }
+    )
+    if (res.ok) {
+      const data = await res.json()
+      setMemories(data.recentHistory ?? [])
+      setMemoryView('recent')
+    } else {
+      pushToast('error', 'Failed to fetch recent history')
     }
   }
 
@@ -400,6 +422,7 @@ export function DemoClient({
         setTotalSaved(0)
         setMessages([])
         setRetrievedContext([])
+        setRecentHistory([])
         setMemoryView(null)
         pushToast('success', `Cleared ${data.deleted} memories`)
       } else {
@@ -596,23 +619,40 @@ export function DemoClient({
           </div>
 
           {/* Context ribbon */}
-          {retrievedContext.length > 0 && (
+          {(retrievedContext.length > 0 || recentHistory.length > 0) && (
             <div className="px-4 pt-3">
               <button
                 onClick={() => setContextOpen((o) => !o)}
                 className="flex items-center gap-2 text-xs text-zinc-500 hover:text-zinc-300 transition-colors w-full"
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
-                <span>{retrievedContext.length} relevant {retrievedContext.length === 1 ? 'memory' : 'memories'} retrieved</span>
+                <span>
+                  {recentHistory.length > 0 && `${recentHistory.length} recent`}
+                  {recentHistory.length > 0 && retrievedContext.length > 0 && ' + '}
+                  {retrievedContext.length > 0 && `${retrievedContext.length} semantic`}
+                  {' '}memories injected
+                </span>
                 <span className="ml-auto">{contextOpen ? '↑' : '↓'}</span>
               </button>
               {contextOpen && (
-                <div className="mt-2 space-y-1 max-h-28 overflow-y-auto">
+                <div className="mt-2 space-y-1 max-h-40 overflow-y-auto">
+                  {recentHistory.length > 0 && (
+                    <p className="text-[10px] text-emerald-400/60 font-semibold uppercase tracking-wider px-1 pt-1">Recent conversation</p>
+                  )}
+                  {recentHistory.map((m) => (
+                    <div key={m.id} className="flex items-center gap-2 rounded-md bg-emerald-500/5 border border-emerald-500/10 px-3 py-1.5 text-xs">
+                      <span className="text-emerald-400/60 shrink-0 text-[10px] uppercase">{m.role}</span>
+                      <span className="text-zinc-300 truncate flex-1">{m.content}</span>
+                    </div>
+                  ))}
+                  {retrievedContext.length > 0 && (
+                    <p className="text-[10px] text-blue-400/60 font-semibold uppercase tracking-wider px-1 pt-1">Semantic matches</p>
+                  )}
                   {retrievedContext.map((m) => {
                     const { pct, color } = similarityBar(m.similarity ?? 0)
                     return (
                       <div key={m.id} className="flex items-center gap-2 rounded-md bg-zinc-800/50 px-3 py-1.5 text-xs">
-                        <span className="text-zinc-500 shrink-0">{m.role}</span>
+                        <span className="text-zinc-500 shrink-0 text-[10px] uppercase">{m.role}</span>
                         <span className="text-zinc-300 truncate flex-1">{m.content}</span>
                         {m.similarity != null && (
                           <span className={`shrink-0 font-medium ${color.replace('bg-', 'text-')}`}>{pct}%</span>
@@ -716,10 +756,10 @@ export function DemoClient({
           </div>
 
           <div className="px-4 pt-4 space-y-2">
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <button
                 onClick={fetchContext}
-                className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
+                className={`rounded-lg border px-2 py-2 text-xs font-medium transition-colors ${
                   memoryView === 'context'
                     ? 'border-blue-500 bg-blue-500/10 text-blue-300'
                     : 'border-zinc-700 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200'
@@ -728,14 +768,24 @@ export function DemoClient({
                 Semantic
               </button>
               <button
+                onClick={viewRecent}
+                className={`rounded-lg border px-2 py-2 text-xs font-medium transition-colors ${
+                  memoryView === 'recent'
+                    ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300'
+                    : 'border-zinc-700 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200'
+                }`}
+              >
+                Recent
+              </button>
+              <button
                 onClick={viewHistory}
-                className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
+                className={`rounded-lg border px-2 py-2 text-xs font-medium transition-colors ${
                   memoryView === 'history'
                     ? 'border-purple-500 bg-purple-500/10 text-purple-300'
                     : 'border-zinc-700 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200'
                 }`}
               >
-                History
+                All Chats
               </button>
             </div>
 

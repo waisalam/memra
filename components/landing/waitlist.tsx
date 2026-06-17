@@ -1,79 +1,41 @@
-'use client'
-
-import { useState } from 'react'
+import Link from 'next/link'
 
 export function Waitlist() {
-  const [email, setEmail] = useState('')
-  const [submitted, setSubmitted] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!email.trim() || submitting) return
-    setSubmitting(true)
-    setError(null)
-    try {
-      const res = await fetch('/api/waitlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim() }),
-      })
-      if (!res.ok) {
-        const data = await res.json()
-        setError(data.error ?? 'Something went wrong')
-        return
-      }
-      setSubmitted(true)
-    } catch {
-      setError('Network error. Please try again.')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
   return (
     <section id="waitlist" className="py-24 px-6 bg-[#030303]">
       <div className="max-w-lg mx-auto text-center space-y-8">
         <div className="space-y-3">
           <h2 className="text-3xl font-bold text-white">
-            Get early access to the VS Code Extension
+            Get the VS Code Extension
           </h2>
           <p className="text-zinc-500 text-base">
-            Be the first to know when it launches
+            Auto-capture every AI conversation. Zero setup — install and forget.
           </p>
         </div>
 
-        {submitted ? (
-          <div
-            className="rounded-2xl border p-6 space-y-2"
-            style={{ borderColor: 'rgba(16,185,129,0.3)', background: 'rgba(16,185,129,0.05)' }}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <a
+            href="https://marketplace.visualstudio.com/items?itemName=memra.memra"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl text-base font-semibold text-white transition-all hover:opacity-90 hover:scale-[1.02]"
+            style={{ background: 'linear-gradient(135deg, #059669, #10b981)', boxShadow: '0 0 30px rgba(16,185,129,0.2)', minHeight: '48px' }}
           >
-            <p className="text-emerald-400 font-semibold">You&apos;re on the list!</p>
-            <p className="text-zinc-500 text-sm">We&apos;ll email you when it launches.</p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
-            <input
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="flex-1 rounded-xl border border-zinc-700 bg-zinc-900/60 px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500 transition-colors"
-              style={{ minHeight: '48px' }}
-            />
-            <button
-              type="submit"
-              disabled={submitting || !email.trim()}
-              className="px-6 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50 shrink-0"
-              style={{ background: 'linear-gradient(135deg, #059669, #10b981)', minHeight: '48px' }}
-            >
-              {submitting ? 'Joining...' : 'Join Waitlist'}
-            </button>
-          </form>
-        )}
-        {error && <p className="text-red-400 text-sm">{error}</p>}
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />
+            </svg>
+            Install from Marketplace
+          </a>
+          <Link
+            href="/dashboard/keys?type=extension"
+            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl text-base font-medium text-zinc-300 border border-zinc-700 hover:border-zinc-500 hover:text-zinc-100 transition-all"
+            style={{ minHeight: '48px' }}
+          >
+            Get Extension Key
+          </Link>
+        </div>
+
+        <p className="text-zinc-700 text-sm">Works with GitHub Copilot · Claude Code · Cline · Continue</p>
       </div>
     </section>
   )

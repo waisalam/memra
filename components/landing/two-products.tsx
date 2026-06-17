@@ -108,8 +108,8 @@ export function TwoProducts() {
                 >
                   For VS Code Users
                 </span>
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-amber-400 bg-amber-500/10 border border-amber-500/20">
-                  COMING SOON
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-emerald-400 bg-emerald-500/10 border border-emerald-500/20">
+                  LIVE
                 </span>
               </div>
               <div>
@@ -153,11 +153,13 @@ export function TwoProducts() {
 
             <div className="flex-1" />
             <a
-              href="#waitlist"
-              className="flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium text-emerald-400 transition-all hover:bg-emerald-500/5 border border-emerald-500/30"
-              style={{ minHeight: '44px' }}
+              href="https://marketplace.visualstudio.com/items?itemName=memra.memra"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium text-white transition-all hover:opacity-90"
+              style={{ background: 'linear-gradient(135deg, #059669, #10b981)', minHeight: '44px' }}
             >
-              Join Waitlist
+              Install from VS Code Marketplace
             </a>
           </div>
         </div>

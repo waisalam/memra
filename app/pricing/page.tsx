@@ -39,10 +39,9 @@ const PLANS = [
       'Usage analytics',
       'Custom agent IDs',
     ],
-    cta: 'Coming soon',
-    href: null,
+    cta: 'Get started',
+    href: '/login',
     gradient: true,
-    comingSoon: true,
   },
   {
     name: 'Enterprise',

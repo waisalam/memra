@@ -44,10 +44,9 @@ const PLANS = [
       { text: '10,000 messages/session', ok: true },
       { text: 'AI resume prompts', ok: true },
     ],
-    cta: 'Coming soon',
+    cta: 'Get started',
     ctaStyle: 'gradient',
     popular: true,
-    comingSoon: true,
   },
   {
     name: 'Enterprise',
@@ -179,7 +178,7 @@ export function Pricing({ ctaHref = '/login' }: { ctaHref?: string }) {
                 <ul className="space-y-2.5 pt-2 border-t border-zinc-800/60">
                   <li className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider pb-0.5">
                     <span className="text-emerald-400/60">VS Code Extension</span>
-                    <span className="text-[8px] font-bold px-1 py-0.5 rounded text-amber-400 bg-amber-500/10 border border-amber-500/20 normal-case">Coming Soon</span>
+                    <span className="text-[8px] font-bold px-1 py-0.5 rounded text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 normal-case">Included</span>
                   </li>
                   {plan.extensionFeatures.map((f: { text: string; ok: boolean }) => (
                     <li key={f.text} className={`flex items-center gap-2.5 text-sm ${f.ok ? 'text-zinc-300' : 'text-zinc-700'}`}>

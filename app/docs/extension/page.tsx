@@ -2,21 +2,21 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Extension API Docs — Memra',
-  description: 'API reference for the Memra VS Code Extension. Capture, resume, and manage AI chat sessions automatically.',
+  title: 'VS Code Extension — Memra',
+  description: 'Install the Memra VS Code Extension to auto-capture every AI chat session and restore context across sessions.',
 }
 
 const SECTIONS = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'authentication', label: 'Authentication' },
-  { id: 'session-start', label: 'Start Session' },
-  { id: 'session-message', label: 'Send Message' },
-  { id: 'session-end', label: 'End Session' },
-  { id: 'session-resume', label: 'Resume Session' },
-  { id: 'list-sessions', label: 'List Sessions' },
-  { id: 'session-detail', label: 'Session Detail' },
-  { id: 'memory-bridge', label: 'Memory Bridge' },
-  { id: 'plan-limits', label: 'Plan Limits' },
+  { id: 'what-is-it', label: 'What is it?' },
+  { id: 'install', label: 'Installation' },
+  { id: 'setup-api-key', label: 'Set up API Key' },
+  { id: 'how-it-works', label: 'How it Works' },
+  { id: 'sessions-panel', label: 'Sessions Panel' },
+  { id: 'resume-session', label: 'Resume a Session' },
+  { id: 'supported-tools', label: 'Supported AI Tools' },
+  { id: 'commands', label: 'Commands' },
+  { id: 'plans', label: 'Plans & Limits' },
+  { id: 'faq', label: 'FAQ' },
 ]
 
 function Code({ children }: { children: string }) {
@@ -43,22 +43,44 @@ function H2({ id, children }: { id: string; children: React.ReactNode }) {
   )
 }
 
+function H3({ children }: { children: React.ReactNode }) {
+  return <h3 className="text-base font-semibold text-zinc-200 mt-6 mb-2">{children}</h3>
+}
+
 function P({ children }: { children: React.ReactNode }) {
   return <p className="text-sm text-zinc-400 leading-relaxed">{children}</p>
 }
 
-function EndpointHeader({ method, path }: { method: string; path: string }) {
-  const colors: Record<string, string> = {
-    GET: 'text-blue-400 bg-blue-500/10',
-    POST: 'text-green-400 bg-green-500/10',
-    DELETE: 'text-red-400 bg-red-500/10',
-  }
+function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-2 mt-4 mb-3">
-      <span className={`text-xs font-bold px-2 py-0.5 rounded ${colors[method] ?? 'text-zinc-400 bg-zinc-800'}`}>
-        {method}
-      </span>
-      <code className="text-sm font-mono text-zinc-300">{path}</code>
+    <div className="flex gap-4">
+      <div className="flex flex-col items-center">
+        <div
+          className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+          style={{ background: 'linear-gradient(135deg, #059669, #10b981)' }}
+        >
+          {n}
+        </div>
+        <div className="flex-1 w-px bg-[#1a1a1a] mt-2" />
+      </div>
+      <div className="pb-6 flex-1 space-y-2">
+        <p className="text-sm font-semibold text-zinc-200">{title}</p>
+        <div className="space-y-2">{children}</div>
+      </div>
+    </div>
+  )
+}
+
+function Callout({ type, children }: { type: 'info' | 'warning' | 'tip'; children: React.ReactNode }) {
+  const styles = {
+    info: { bg: 'rgba(59,130,246,0.06)', border: 'rgba(59,130,246,0.2)', icon: 'ℹ️', label: 'Note', color: '#60a5fa' },
+    warning: { bg: 'rgba(251,146,60,0.06)', border: 'rgba(251,146,60,0.2)', icon: '⚠️', label: 'Warning', color: '#fb923c' },
+    tip: { bg: 'rgba(52,211,153,0.06)', border: 'rgba(52,211,153,0.2)', icon: '💡', label: 'Tip', color: '#34d399' },
+  }[type]
+  return (
+    <div className="rounded-xl p-4 space-y-1" style={{ background: styles.bg, border: `1px solid ${styles.border}` }}>
+      <p className="text-xs font-bold" style={{ color: styles.color }}>{styles.icon} {styles.label}</p>
+      <div className="text-sm text-zinc-400 leading-relaxed">{children}</div>
     </div>
   )
 }
@@ -74,12 +96,12 @@ export default function ExtensionDocsPage() {
           <span className="text-zinc-700">/</span>
           <Link href="/docs" className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">Docs</Link>
           <span className="text-zinc-700">/</span>
-          <span className="text-sm text-zinc-300 font-medium">Extension API</span>
+          <span className="text-sm text-zinc-300 font-medium">VS Code Extension</span>
         </div>
         <div className="flex items-center gap-4">
-          <Link href="/dashboard/keys?type=extension" className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors hidden sm:block">
-            Get Extension key →
-          </Link>
+          <a href="https://marketplace.visualstudio.com/items?itemName=memra.memra" target="_blank" rel="noopener noreferrer" className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors hidden sm:block">
+            Install Extension →
+          </a>
           <Link href="/dashboard" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
             Dashboard
           </Link>
@@ -89,7 +111,7 @@ export default function ExtensionDocsPage() {
       <div className="max-w-6xl mx-auto flex">
         <aside className="hidden lg:block w-56 shrink-0 sticky top-[53px] h-[calc(100vh-53px)] overflow-y-auto py-8 pr-4">
           <div className="space-y-1">
-            <p className="text-[10px] font-bold text-emerald-500/70 uppercase tracking-wider px-3 pb-2">Extension API</p>
+            <p className="text-[10px] font-bold text-emerald-500/70 uppercase tracking-wider px-3 pb-2">Extension Guide</p>
             {SECTIONS.map((s) => (
               <a
                 key={s.id}
@@ -103,251 +125,359 @@ export default function ExtensionDocsPage() {
         </aside>
 
         <main className="flex-1 min-w-0 px-4 sm:px-8 py-10 max-w-3xl">
+
+          {/* Hero */}
           <div className="mb-10 space-y-3">
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-bold px-2.5 py-1 rounded-full text-emerald-400 uppercase tracking-widest" style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)' }}>
-                Extension API
+                VS Code Extension
               </span>
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-amber-400 bg-amber-500/10 border border-amber-500/20">COMING SOON</span>
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-emerald-400 bg-emerald-500/10 border border-emerald-500/20">LIVE</span>
             </div>
-            <h1 className="text-3xl font-black text-zinc-100">Extension API Reference</h1>
+            <h1 className="text-3xl font-black text-zinc-100">Memra for VS Code</h1>
             <P>
-              API endpoints for the Memra VS Code Extension. These endpoints power automatic session capture, message saving, and cross-session context injection.
+              Never lose your AI chat context again. The Memra extension auto-captures every conversation you have with AI in VS Code — and lets you restore that context in one click when you start a new session.
             </P>
           </div>
 
-          {/* Overview */}
-          <H2 id="overview">Overview</H2>
+          {/* What is it */}
+          <H2 id="what-is-it">What is it?</H2>
           <div className="space-y-4 mt-4">
             <P>
-              The Extension API provides 7 endpoints for managing VS Code AI chat sessions. The extension captures conversations from Copilot, Claude Code, Cline, Continue, and other AI tools — saving them to Memra automatically.
+              Memra is a VS Code extension that runs silently in the background. It watches your AI conversations — GitHub Copilot, Claude Code, Cline, Continue — and saves every message to the Memra cloud automatically.
             </P>
             <P>
-              All endpoints require an Extension API key (<InlineCode>mk_ext_...</InlineCode>). The user ID is automatically derived from the account — it is never passed in the request body.
+              When you open VS Code the next day, switch projects, or start a fresh chat — your previous context is one click away. No more re-explaining your project to the AI.
             </P>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[
+                { title: '🔄 Auto-capture', desc: 'Every AI message is saved in real-time. No manual steps — just code normally.' },
+                { title: '📋 One-click restore', desc: 'Click a past session to inject its context into your current AI chat.' },
+                { title: '🛠️ Multi-tool support', desc: 'Works with Copilot, Claude Code, Cline, Continue — all at once.' },
+                { title: '📁 Project-aware', desc: 'Sessions are grouped by project. Switch folders and the right sessions appear.' },
+              ].map(({ title, desc }) => (
+                <div key={title} className="rounded-xl border border-[#1e1e1e] p-4 space-y-1.5" style={{ background: 'rgba(255,255,255,0.02)' }}>
+                  <p className="text-sm font-semibold text-zinc-200">{title}</p>
+                  <p className="text-xs text-zinc-500 leading-relaxed">{desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Authentication */}
-          <H2 id="authentication">Authentication</H2>
+          {/* Installation */}
+          <H2 id="install">Installation</H2>
           <div className="space-y-4 mt-4">
-            <P>All extension endpoints require the <InlineCode>x-api-key</InlineCode> header with an extension key:</P>
-            <Code>{`// Headers
-x-api-key: mk_ext_your_key_here
-
-// Key types (extension endpoints ONLY accept mk_ext_ keys)
-mk_mem_  → Memory API keys (rejected with 403)
-mk_mcp_  → MCP Server keys (rejected with 403)
-mk_ext_  → Extension keys  ✓`}</Code>
-            <P>Create extension keys at <Link href="/dashboard/keys?type=extension" className="text-emerald-400 hover:text-emerald-300">Dashboard → Extension Keys</Link>.</P>
+            <P>Install in under 2 minutes:</P>
+            <div className="space-y-6">
+              <Step n={1} title="Install from the VS Code Marketplace">
+                <P>
+                  Open VS Code, go to the Extensions panel (<InlineCode>Ctrl+Shift+X</InlineCode>), search for <strong className="text-zinc-200">Memra</strong>, and click <strong className="text-zinc-200">Install</strong>.
+                </P>
+                <P>
+                  Or install directly from the{' '}
+                  <a href="https://marketplace.visualstudio.com/items?itemName=memra.memra" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300">
+                    VS Code Marketplace →
+                  </a>
+                </P>
+              </Step>
+              <Step n={2} title="Get your Extension API key">
+                <P>
+                  Go to{' '}
+                  <Link href="/dashboard/keys?type=extension" className="text-emerald-400 hover:text-emerald-300">
+                    Dashboard → Extension Keys
+                  </Link>{' '}
+                  and create a new key. It will start with <InlineCode>mk_ext_</InlineCode>. Copy it.
+                </P>
+                <Callout type="info">
+                  You can only have <strong>1 active extension key</strong> per account. If you need a new one, revoke the old one first.
+                </Callout>
+              </Step>
+              <Step n={3} title="Set the API key in VS Code">
+                <P>
+                  Open the Command Palette (<InlineCode>Ctrl+Shift+P</InlineCode>), type <strong className="text-zinc-200">Memra: Set API Key</strong>, and paste your key.
+                </P>
+                <Code>{`Ctrl+Shift+P → "Memra: Set API Key" → paste mk_ext_... → Enter`}</Code>
+              </Step>
+              <Step n={4} title="That's it — Memra runs automatically">
+                <P>
+                  You&apos;ll see a <strong className="text-zinc-200">Memra</strong> status bar item at the bottom of VS Code. Start chatting with any AI tool — sessions are captured automatically.
+                </P>
+              </Step>
+            </div>
           </div>
 
-          {/* Session Start */}
-          <H2 id="session-start">Start Session</H2>
+          {/* Setup API Key detail */}
+          <H2 id="setup-api-key">Set up API Key</H2>
           <div className="space-y-4 mt-4">
-            <EndpointHeader method="POST" path="/api/extension/session/start" />
-            <P>Creates a new session or resumes an existing one by session hash.</P>
-            <Code>{`// Request body
-{
-  "tool": "copilot" | "claude" | "cline" | "continue" | "other",
-  "sessionHash": "unique-session-id-from-vscode",
-  "title": "Optional session title"
-}
-
-// Response
-{
-  "sessionId": "clxyz...",
-  "isNew": true,
-  "resumePrompt": "Previous session context..." // if available
-}`}</Code>
-            <Code>{`// TypeScript example
-const res = await fetch('https://memra-rho.vercel.app/api/extension/session/start', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'x-api-key': 'mk_ext_your_key'
-  },
-  body: JSON.stringify({
-    tool: 'copilot',
-    sessionHash: crypto.randomUUID(),
-    title: 'Working on auth flow'
-  })
-})
-const { sessionId, isNew, resumePrompt } = await res.json()`}</Code>
+            <P>The extension needs an API key to communicate with Memra&apos;s cloud. Here&apos;s how to get one:</P>
+            <ol className="space-y-3">
+              {[
+                ['Sign in', 'Go to memra-rho.vercel.app and sign in with Google'],
+                ['Navigate to Extension Keys', 'Dashboard → Extension Keys tab'],
+                ['Create key', 'Click "Create Extension key", give it a name, and copy the key (starts with mk_ext_)'],
+                ['Paste in VS Code', 'Ctrl+Shift+P → "Memra: Set API Key" → paste → Enter'],
+              ].map(([title, desc], i) => (
+                <li key={title} className="flex items-start gap-3">
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-emerald-300 shrink-0 mt-0.5" style={{ background: 'rgba(16,185,129,0.2)' }}>
+                    {i + 1}
+                  </span>
+                  <div>
+                    <p className="text-sm text-zinc-300 font-medium">{title}</p>
+                    <p className="text-xs text-zinc-600 mt-0.5">{desc}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+            <Callout type="warning">
+              Never share your API key. It gives access to your session data. If compromised, revoke it in the dashboard and create a new one.
+            </Callout>
           </div>
 
-          {/* Session Message */}
-          <H2 id="session-message">Send Message</H2>
+          {/* How it works */}
+          <H2 id="how-it-works">How it Works</H2>
           <div className="space-y-4 mt-4">
-            <EndpointHeader method="POST" path="/api/extension/session/message" />
-            <P>Saves a single message to a session. Call this for each user/assistant message in the conversation.</P>
-            <Code>{`// Request body
-{
-  "sessionId": "clxyz...",
-  "role": "user" | "assistant",
-  "content": "The message content",
-  "tool": "copilot"
-}
-
-// Response
-{
-  "success": true,
-  "messageCount": 15,
-  "tokenCount": 195
-}`}</Code>
-            <Code>{`// TypeScript example
-await fetch('https://memra-rho.vercel.app/api/extension/session/message', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'x-api-key': 'mk_ext_your_key'
-  },
-  body: JSON.stringify({
-    sessionId: 'clxyz...',
-    role: 'user',
-    content: 'How do I implement JWT auth?',
-    tool: 'copilot'
-  })
-})`}</Code>
-          </div>
-
-          {/* Session End */}
-          <H2 id="session-end">End Session</H2>
-          <div className="space-y-4 mt-4">
-            <EndpointHeader method="POST" path="/api/extension/session/end" />
-            <P>Ends a session. Pro/Team plans get an AI-generated summary and resume prompt via Groq.</P>
-            <Code>{`// Request body
-{ "sessionId": "clxyz..." }
-
-// Response
-{
-  "success": true,
-  "summary": "Built JWT authentication with...",
-  "resumePrompt": "Continue working on JWT auth..."
-}`}</Code>
-          </div>
-
-          {/* Session Resume */}
-          <H2 id="session-resume">Resume Session</H2>
-          <div className="space-y-4 mt-4">
-            <EndpointHeader method="GET" path="/api/extension/session/resume" />
-            <P>Gets the resume prompt and recent messages from a session. Omit <InlineCode>sessionId</InlineCode> to get the most recent session.</P>
-            <Code>{`// Query params (all optional)
-?sessionId=clxyz...
-
-// Response (Pro/Team)
-{
-  "sessionId": "clxyz...",
-  "title": "Auth flow work",
-  "summary": "...",
-  "resumePrompt": "...",
-  "messages": [{ "role": "user", "content": "...", "savedAt": "..." }]
-}
-
-// Response (Free) — no resumePrompt, last 5 messages only
-{
-  "sessionId": "clxyz...",
-  "title": "Auth flow work",
-  "summary": "...",
-  "messages": [...],
-  "upgradeMessage": "Upgrade to Pro for AI-generated resume prompts"
-}`}</Code>
-          </div>
-
-          {/* List Sessions */}
-          <H2 id="list-sessions">List Sessions</H2>
-          <div className="space-y-4 mt-4">
-            <EndpointHeader method="GET" path="/api/extension/sessions" />
-            <P>Returns a paginated list of sessions.</P>
-            <Code>{`// Query params
-?limit=10        // default 10, max 50
-&tool=copilot     // filter by tool
-&active=true      // filter by status
-
-// Response
-{
-  "sessions": [{
-    "id": "clxyz...",
-    "title": "Auth flow work",
-    "tool": "copilot",
-    "messageCount": 42,
-    "tokenCount": 5460,
-    "startedAt": "2024-01-15T...",
-    "lastSavedAt": "2024-01-15T...",
-    "isActive": false,
-    "summary": "First 100 chars of summary..."
-  }],
-  "count": 10
-}`}</Code>
-          </div>
-
-          {/* Session Detail */}
-          <H2 id="session-detail">Session Detail</H2>
-          <div className="space-y-4 mt-4">
-            <EndpointHeader method="GET" path="/api/extension/sessions/:sessionId" />
-            <P>Returns full session with all messages. Free plan gets last 20 messages only.</P>
-            <EndpointHeader method="DELETE" path="/api/extension/sessions/:sessionId" />
-            <P>Soft-deletes a session (sets isActive=false). Add <InlineCode>?permanent=true</InlineCode> for hard delete.</P>
-            <Code>{`// DELETE response
-{ "success": true, "permanent": false }`}</Code>
-          </div>
-
-          {/* Memory Bridge */}
-          <H2 id="memory-bridge">Memory Bridge</H2>
-          <div className="space-y-4 mt-4">
-            <P>These endpoints bridge the extension to the existing Memory API. The user ID is auto-derived from your account — you never pass it.</P>
-            <EndpointHeader method="POST" path="/api/extension/memory" />
-            <P>Saves a memory (same as Memory API save, but auth via extension key).</P>
-            <Code>{`// Request body
-{
-  "userMessage": "We decided to use Prisma with PostgreSQL",
-  "aiReply": "Got it, I'll remember that for future sessions"
-}
-
-// Response
-{ "success": true, "saved": 2 }`}</Code>
-            <EndpointHeader method="GET" path="/api/extension/memory" />
-            <P>Retrieves semantically relevant context (same as Memory API context).</P>
-            <Code>{`// Query params
-?query=database setup&limit=5
-
-// Response
-{
-  "context": [{ "id": "...", "content": "...", "role": "user", "similarity": 0.87 }],
-  "count": 3
-}`}</Code>
-          </div>
-
-          {/* Plan Limits */}
-          <H2 id="plan-limits">Plan Limits</H2>
-          <div className="space-y-4 mt-4">
+            <P>
+              Once installed and configured, Memra runs completely in the background. Here&apos;s what happens:
+            </P>
+            <H3>Auto-capture</H3>
+            <P>
+              The extension watches for AI conversations using file watchers and the VS Code Chat API. Each tool stores chat data differently — Memra knows where to look:
+            </P>
             <div className="rounded-xl border border-[#1e1e1e] overflow-hidden">
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-[#1e1e1e] bg-zinc-900/30">
-                    <th className="text-left px-4 py-2.5 text-zinc-500 font-medium">Limit</th>
-                    <th className="text-center px-4 py-2.5 text-zinc-500 font-medium">Free</th>
-                    <th className="text-center px-4 py-2.5 text-zinc-500 font-medium">Pro</th>
-                    <th className="text-center px-4 py-2.5 text-zinc-500 font-medium">Team</th>
+                    <th className="text-left px-4 py-2.5 text-zinc-500 font-medium">AI Tool</th>
+                    <th className="text-left px-4 py-2.5 text-zinc-500 font-medium">How Memra captures it</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#1a1a1a]">
                   {[
-                    ['Sessions', '10', 'Unlimited', 'Unlimited'],
-                    ['Messages per session', '100', '10,000', 'Unlimited'],
-                    ['Resume messages returned', '5', '10', '10'],
-                    ['Session detail messages', '20', 'All', 'All'],
-                    ['AI summary + resume prompt', '✗', '✓', '✓'],
-                  ].map(([feature, free, pro, team]) => (
-                    <tr key={feature}>
-                      <td className="px-4 py-2.5 text-zinc-400">{feature}</td>
-                      <td className="px-4 py-2.5 text-center text-zinc-500">{free}</td>
-                      <td className="px-4 py-2.5 text-center text-emerald-400">{pro}</td>
-                      <td className="px-4 py-2.5 text-center text-emerald-400">{team}</td>
+                    ['Claude Code', 'Watches ~/.claude/projects/**/*.jsonl for conversation logs'],
+                    ['Continue', 'Watches ~/.continue/sessions/*.json for session history'],
+                    ['Cline', 'Watches globalStorage tasks for api_conversation_history.json'],
+                    ['GitHub Copilot', 'Uses the VS Code @memra chat participant API'],
+                  ].map(([tool, how]) => (
+                    <tr key={tool}>
+                      <td className="px-4 py-2.5 text-zinc-300 font-medium">{tool}</td>
+                      <td className="px-4 py-2.5 text-zinc-500">{how}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+
+            <H3>Project-aware sessions</H3>
+            <P>
+              Each workspace folder gets a unique project ID. When you open a different folder, the current session ends and a new one starts for that project. Sessions are grouped per project — so when you come back to a project, you see only that project&apos;s history.
+            </P>
+
+            <H3>Real-time sync</H3>
+            <P>
+              Every message is sent to the Memra API as it happens. You can see your sessions updating live in the{' '}
+              <Link href="/dashboard/extension" className="text-emerald-400 hover:text-emerald-300">dashboard</Link>.
+            </P>
+          </div>
+
+          {/* Sessions panel */}
+          <H2 id="sessions-panel">Sessions Panel</H2>
+          <div className="space-y-4 mt-4">
+            <P>
+              After installing, you&apos;ll see a <strong className="text-zinc-200">Memra: Sessions</strong> panel in the VS Code sidebar. It shows all your captured sessions for the current project.
+            </P>
+            <P>Each session shows:</P>
+            <ul className="space-y-2">
+              {[
+                'Session title — auto-generated from the first message',
+                'Message count — how many messages were captured',
+                'AI tool — which tool was used (Copilot, Claude, Cline, etc.)',
+                'Date — when the session happened',
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2.5 text-sm text-zinc-400">
+                  <span className="text-emerald-400 mt-0.5 shrink-0">·</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <P>
+              Click the <strong className="text-zinc-200">refresh</strong> icon at the top of the panel to fetch the latest sessions from the cloud.
+            </P>
+          </div>
+
+          {/* Resume a session */}
+          <H2 id="resume-session">Resume a Session</H2>
+          <div className="space-y-4 mt-4">
+            <P>
+              This is the core feature. When you click on a past session in the Memra panel, the extension restores that context into your current AI chat:
+            </P>
+
+            <div className="rounded-xl border p-5 space-y-4" style={{ borderColor: 'rgba(16,185,129,0.2)', background: 'rgba(16,185,129,0.04)' }}>
+              <p className="text-sm font-semibold text-zinc-200">When you click a session, you get a choice:</p>
+              <div className="space-y-3">
+                {[
+                  { tool: 'Claude Code', desc: 'Context is copied to your clipboard. Paste it with Ctrl+V into your Claude Code chat to continue where you left off.' },
+                  { tool: 'GitHub Copilot', desc: 'Context is automatically injected into the Copilot chat input. Just press Enter to continue.' },
+                  { tool: 'Clipboard Only', desc: 'Copies the context to clipboard so you can paste it into any AI tool manually.' },
+                ].map(({ tool, desc }) => (
+                  <div key={tool} className="flex items-start gap-3">
+                    <span className="text-emerald-400 text-sm mt-0.5 shrink-0">→</span>
+                    <div>
+                      <p className="text-sm text-zinc-200 font-medium">{tool}</p>
+                      <p className="text-xs text-zinc-500 mt-0.5">{desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <P>
+              The restored context includes a summary of what was discussed, key decisions made, and where you left off — so the AI can pick up exactly where your last session ended.
+            </P>
+
+            <Callout type="tip">
+              You can also use the command <InlineCode>Memra: Copy Resume Prompt</InlineCode> from the Command Palette to copy the most recent session&apos;s context without opening the sidebar.
+            </Callout>
+          </div>
+
+          {/* Supported tools */}
+          <H2 id="supported-tools">Supported AI Tools</H2>
+          <div className="space-y-4 mt-4">
+            <P>Memra captures conversations from these VS Code AI tools:</P>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {[
+                { name: 'GitHub Copilot', color: '#60a5fa', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.2)', status: 'Chat participant + auto-paste' },
+                { name: 'Claude Code', color: '#fb923c', bg: 'rgba(251,146,60,0.08)', border: 'rgba(251,146,60,0.2)', status: 'File watcher + clipboard' },
+                { name: 'Cline', color: '#34d399', bg: 'rgba(52,211,153,0.08)', border: 'rgba(52,211,153,0.2)', status: 'File watcher + clipboard' },
+                { name: 'Continue', color: '#a78bfa', bg: 'rgba(139,92,246,0.08)', border: 'rgba(139,92,246,0.2)', status: 'File watcher + clipboard' },
+              ].map(({ name, color, bg, border, status }) => (
+                <div key={name} className="rounded-xl border p-3 flex items-center gap-3" style={{ background: bg, borderColor: border }}>
+                  <div className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
+                  <div>
+                    <p className="text-sm font-medium" style={{ color }}>{name}</p>
+                    <p className="text-[11px] text-zinc-600">{status}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <P>
+              More tools will be supported as they add chat APIs or local storage. The extension is designed to detect and capture any AI tool that stores conversations locally.
+            </P>
+          </div>
+
+          {/* Commands */}
+          <H2 id="commands">Commands</H2>
+          <div className="space-y-4 mt-4">
+            <P>Open the Command Palette (<InlineCode>Ctrl+Shift+P</InlineCode>) and type &ldquo;Memra&rdquo; to see all available commands:</P>
+            <div className="rounded-xl border border-[#1e1e1e] overflow-hidden">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-[#1e1e1e] bg-zinc-900/30">
+                    <th className="text-left px-4 py-2.5 text-zinc-500 font-medium">Command</th>
+                    <th className="text-left px-4 py-2.5 text-zinc-500 font-medium">What it does</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#1a1a1a]">
+                  {[
+                    ['Memra: Set API Key', 'Configure your extension API key (mk_ext_...)'],
+                    ['Memra: Show Status', 'Shows current connection status, active session, and message count'],
+                    ['Memra: Copy Resume Prompt', 'Copies the most recent session context to your clipboard'],
+                    ['Memra: Focus on Sessions View', 'Opens the Memra sessions sidebar panel'],
+                    ['Memra: Start New Session', 'Manually starts a new session (normally automatic)'],
+                    ['Memra: View Sessions in Dashboard', 'Opens the Memra web dashboard in your browser'],
+                  ].map(([cmd, desc]) => (
+                    <tr key={cmd}>
+                      <td className="px-4 py-2.5 text-zinc-300 font-medium font-mono">{cmd}</td>
+                      <td className="px-4 py-2.5 text-zinc-500">{desc}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Plans */}
+          <H2 id="plans">Plans &amp; Limits</H2>
+          <div className="space-y-4 mt-4">
+            <P>The extension is included with every Memra plan:</P>
+            <div className="rounded-xl border border-[#1e1e1e] overflow-hidden">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-[#1e1e1e] bg-zinc-900/30">
+                    <th className="text-left px-4 py-2.5 text-zinc-500 font-medium">Feature</th>
+                    <th className="text-center px-4 py-2.5 text-zinc-500 font-medium">Free</th>
+                    <th className="text-center px-4 py-2.5 text-zinc-500 font-medium">Pro</th>
+                    <th className="text-center px-4 py-2.5 text-zinc-500 font-medium">Enterprise</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#1a1a1a]">
+                  {[
+                    ['Stored sessions', '5', '50', 'Unlimited'],
+                    ['Auto-capture', '✓', '✓', '✓'],
+                    ['Session restore', '✓', '✓', '✓'],
+                    ['AI resume prompts', '✗', '✓', '✓'],
+                    ['AI session summaries', '✗', '✓', '✓'],
+                    ['Extension API keys', '1', '1', '1'],
+                    ['Web dashboard', '✓', '✓', '✓'],
+                  ].map(([feature, free, pro, enterprise]) => (
+                    <tr key={feature}>
+                      <td className="px-4 py-2.5 text-zinc-400">{feature}</td>
+                      <td className="px-4 py-2.5 text-center text-zinc-500">{free}</td>
+                      <td className="px-4 py-2.5 text-center text-emerald-400">{pro}</td>
+                      <td className="px-4 py-2.5 text-center text-emerald-400">{enterprise}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <P>
+              When you hit the session limit on the free plan, the extension will show a notification with an option to upgrade. You can also delete old sessions from the{' '}
+              <Link href="/dashboard/extension" className="text-emerald-400 hover:text-emerald-300">web dashboard</Link>{' '}
+              to free up space.
+            </P>
+          </div>
+
+          {/* FAQ */}
+          <H2 id="faq">FAQ</H2>
+          <div className="space-y-6 mt-4">
+            {[
+              {
+                q: 'Does Memra read my code?',
+                a: 'No. Memra only captures AI chat messages — the conversations you have with Copilot, Claude Code, etc. It does not read, index, or upload your source code files.',
+              },
+              {
+                q: 'What data is stored?',
+                a: 'Only the text of AI chat messages (user prompts and AI responses), along with metadata like timestamps and which tool was used. Messages are stored encrypted in transit and at rest.',
+              },
+              {
+                q: 'Can I use the extension with multiple AI tools at once?',
+                a: 'Yes. Memra captures from all supported tools simultaneously. If you use Copilot and Claude Code in the same session, messages from both appear in the same session timeline.',
+              },
+              {
+                q: 'What happens when I switch projects?',
+                a: 'The current session ends automatically and a new session starts for the new project. Each project has its own session history.',
+              },
+              {
+                q: 'Can I delete a session?',
+                a: 'Yes. From the web dashboard at Dashboard → Extension Sessions, you can delete individual sessions. You can also delete from the sessions panel in VS Code.',
+              },
+              {
+                q: 'Does it slow down VS Code?',
+                a: 'No. The extension is lightweight (~31KB). File watchers and API calls are asynchronous and don\'t block the editor.',
+              },
+              {
+                q: 'I clicked a session but nothing happened',
+                a: 'Make sure you have an AI chat panel open. For Claude Code, the context is copied to clipboard — press Ctrl+V. For Copilot, it auto-fills the chat input.',
+              },
+              {
+                q: 'Why does it say "Invalid Date" in the sidebar?',
+                a: 'This is a display formatting issue that occurs with certain timezones. The sessions are captured correctly — the dates display properly in the web dashboard.',
+              },
+            ].map(({ q, a }) => (
+              <div key={q} className="space-y-2">
+                <p className="text-sm font-semibold text-zinc-200">{q}</p>
+                <p className="text-sm text-zinc-500 leading-relaxed">{a}</p>
+              </div>
+            ))}
           </div>
 
           {/* CTA */}
@@ -356,27 +486,29 @@ await fetch('https://memra-rho.vercel.app/api/extension/session/message', {
             style={{ background: 'rgba(16,185,129,0.04)', borderColor: 'rgba(16,185,129,0.2)' }}
           >
             <p className="text-lg font-bold text-zinc-100">Ready to get started?</p>
-            <p className="text-sm text-zinc-500">Create your Extension key and start capturing sessions.</p>
+            <p className="text-sm text-zinc-500">Install the extension and set up your key in under 2 minutes.</p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link
-                href="/dashboard/keys?type=extension"
+              <a
+                href="https://marketplace.visualstudio.com/items?itemName=memra.memra"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="px-6 py-3 rounded-xl text-sm font-medium text-white transition-all hover:opacity-90"
                 style={{ background: 'linear-gradient(135deg, #059669, #10b981)', minHeight: '44px', display: 'flex', alignItems: 'center' }}
               >
-                Create Extension Key →
-              </Link>
+                Install from Marketplace →
+              </a>
               <Link
-                href="/pricing"
+                href="/dashboard/keys?type=extension"
                 className="px-6 py-3 rounded-xl text-sm font-medium text-zinc-400 border border-zinc-800 hover:text-zinc-200 hover:border-zinc-700 transition-all"
                 style={{ minHeight: '44px', display: 'flex', alignItems: 'center' }}
               >
-                View pricing
+                Get Extension Key
               </Link>
             </div>
           </div>
 
           <div className="mt-10 pt-6 border-t border-[#1a1a1a] flex items-center justify-between text-xs text-zinc-700">
-            <span>Memra Extension API — v1.0</span>
+            <span>Memra VS Code Extension — v0.1.0</span>
             <Link href="/docs" className="hover:text-zinc-500 transition-colors">← Back to docs</Link>
           </div>
         </main>
