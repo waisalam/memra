@@ -10,22 +10,38 @@ import { Tabs, TabList, Tab, TabPanel } from '@/components/ui/tabs'
 
 const QUICKSTART_CODE = `import { MemoryClient } from '@memra-client/client'
 
-const memory = new MemoryClient({ apiKey: 'mk_live_...' })
+const memory = new MemoryClient({ apiKey: 'mk_mem_...' })
 
 export async function chat(userId: string, userMessage: string) {
-  // 1. Pull relevant memories before the model responds
-  const { context } = await memory.getContext(userId, userMessage)
+  // 1. Get recent conversation + relevant older memories
+  const { recentHistory, relevantMemories } = await memory.getContext(
+    userId,
+    userMessage
+  )
 
-  // Memory goes in system prompt — NOT in the user message
-  // This tells the AI what the context is and how to use it
-  const systemPrompt = context.length > 0
-    ? \`You are a helpful assistant with memory of past conversations.
-Here is what you remember:
-\${context.map((m, i) => \`\${i + 1}. [\${m.role}]: \${m.content}\`).join('\\n')}
-Use this memory to give personalized responses.\`
-    : \`You are a helpful assistant.\`
+  // 2. Build a system prompt that includes BOTH
+  let memoryText = ''
+  if (recentHistory.length > 0) {
+    memoryText += 'Recent conversation:\\n'
+    memoryText += recentHistory
+      .map(m => \`[\${m.role}]: \${m.content}\`)
+      .join('\\n')
+    memoryText += '\\n\\n'
+  }
+  if (relevantMemories.length > 0) {
+    memoryText += 'Relevant older memories:\\n'
+    memoryText += relevantMemories
+      .map(m => \`[\${m.role}]: \${m.content}\`)
+      .join('\\n')
+  }
 
-  // 2. Pass context as system prompt — works with any AI provider
+  const systemPrompt = memoryText
+    ? \`You are a helpful assistant with memory.
+\${memoryText}
+Use this to give personalized responses.\`
+    : 'You are a helpful assistant.'
+
+  // 3. Call your AI provider (works with any: OpenAI, Groq, etc.)
   const aiReply = await yourAI.chat.completions.create({
     messages: [
       { role: 'system', content: systemPrompt },
@@ -33,7 +49,7 @@ Use this memory to give personalized responses.\`
     ],
   })
 
-  // 3. Save this exchange to memory
+  // 4. Save this exchange so AI remembers it next time
   await memory.save(userId, userMessage, aiReply)
 
   return aiReply
@@ -42,8 +58,8 @@ Use this memory to give personalized responses.\`
 const CONSTRUCTOR_CODE = `import { MemoryClient } from '@memra-client/client'
 
 const memory = new MemoryClient({
-  apiKey: 'mk_live_...',           // required — from your dashboard
-  baseUrl: 'https://memra.dev/api' // optional, this is the default
+  apiKey: 'mk_mem_...',                          // required — from your dashboard
+  baseUrl: 'https://memra-rho.vercel.app/api'    // optional — this is the default
 })`
 
 const SAVE_SIG_CODE = `memory.save(
@@ -55,7 +71,8 @@ const SAVE_SIG_CODE = `memory.save(
   }
 ): Promise<{ success: boolean; saved: number }>`
 
-const SAVE_EXAMPLE_CODE = `const result = await memory.save(
+const SAVE_EXAMPLE_CODE = `// After your AI replies, save the exchange
+const result = await memory.save(
   'user_abc123',
   'What is my current plan?',
   'You are on the Free plan — 500 memory slots available.',
@@ -65,17 +82,20 @@ const SAVE_EXAMPLE_CODE = `const result = await memory.save(
 
 const CONTEXT_SIG_CODE = `memory.getContext(
   userId: string,
-  query: string,         // the current message — used to find relevant memories
+  query: string,           // the current message — used for semantic search
   options?: {
-    agentId?: string     // filter to a specific agent namespace (default: 'default')
-    limit?: number       // max memories returned (default: 5)
+    agentId?: string       // filter to a specific agent (default: 'default')
+    limit?: number         // max semantic results (default: 5)
+    recentLimit?: number   // max recent messages (default: 10)
   }
 ): Promise<ContextResponse>`
 
 const CONTEXT_TYPES_CODE = `interface ContextResponse {
-  context: Memory[]   // semantically relevant memories, ranked by similarity
+  recentHistory: Memory[]      // last N messages chronologically
+  relevantMemories: Memory[]   // semantic matches from older conversations
+  context: Memory[]            // backwards compat — same as semantic results
   count: number
-  latencyMs: number   // end-to-end search latency, added client-side
+  latencyMs: number            // end-to-end latency, added client-side
 }
 
 interface Memory {
@@ -83,39 +103,52 @@ interface Memory {
   content: string
   role: 'user' | 'assistant'
   createdAt: string
-  similarity: number  // 0–1 cosine similarity score
+  similarity?: number  // 0–1 cosine score (only on semantic results)
 }`
 
-const CONTEXT_EXAMPLE_CODE = `const { context, latencyMs } = await memory.getContext(
+const CONTEXT_EXAMPLE_CODE = `// This is the key method — call it before every AI response
+const { recentHistory, relevantMemories } = await memory.getContext(
   'user_abc123',
   'What plan am I on?',
-  { agentId: 'support-bot', limit: 5 }
+  { limit: 5, recentLimit: 10 }
 )
 
-// context is sorted by similarity — highest first
-context.forEach(m => {
-  console.log(m.role + ':', m.content, '|', m.similarity.toFixed(2))
-})`
+// recentHistory = last 10 messages in order (always includes recent chat)
+// relevantMemories = semantically similar older messages (deduplicated)
+
+// Use BOTH in your system prompt:
+const systemPrompt = \`You remember everything.
+Recent: \${recentHistory.map(m => m.content).join(' | ')}
+Related: \${relevantMemories.map(m => m.content).join(' | ')}\``
 
 const HISTORY_SIG_CODE = `memory.getHistory(
   userId: string,
   options?: {
-    agentId?: string   // filter by agent (omit = return all agents)
-    limit?: number     // number of messages to return (default: 20)
+    agentId?: string     // filter by agent (omit = all agents)
+    limit?: number       // omit to get ALL messages
+    order?: 'asc'|'desc' // default: 'asc' (oldest first)
+    before?: string      // ISO date — get messages before this time
+    after?: string       // ISO date — get messages after this time
   }
 ): Promise<{
-  history: Memory[]   // chronological order, oldest first
-  count: number
+  history: Memory[]     // every message for this user
+  total: number         // total message count
+  count: number         // messages in this response
 }>`
 
-const HISTORY_EXAMPLE_CODE = `const { history, count } = await memory.getHistory('user_abc123', {
-  agentId: 'support-bot',
-  limit: 50
-})
+const HISTORY_EXAMPLE_CODE = `// Get ALL chat history for a user (for showing in your UI)
+const { history, total } = await memory.getHistory('user_abc123')
 
-console.log('Total messages:', count)
+console.log('Total messages stored:', total)
 history.forEach(m => {
   console.log('[' + m.role + '] ' + m.content)
+})
+
+// With filters:
+const recent = await memory.getHistory('user_abc123', {
+  agentId: 'support-bot',
+  order: 'desc',   // newest first
+  limit: 20,       // just the last 20
 })`
 
 const FORGET_SIG_CODE = `memory.forget(
@@ -132,10 +165,67 @@ await memory.forget('user_abc123', { agentId: 'support-bot' })
 const result = await memory.forget('user_abc123')
 // => { success: true, deleted: 124 }`
 
-const HTTP_SAVE_CODE = `curl -X POST https://memra.dev/api/memory/save \\
+const FULL_EXAMPLE_CODE = `// Complete working example — Next.js API route
+import { NextResponse } from 'next/server'
+import MemoryClient from '@memra-client/client'
+
+const memory = new MemoryClient({
+  apiKey: process.env.MEMRA_API_KEY || '',
+})
+
+export async function POST(req: Request) {
+  const { query } = await req.json()
+
+  // Step 1: Get memories (recent chat + relevant older ones)
+  const { recentHistory, relevantMemories } = await memory.getContext(
+    'user_123', query, { limit: 5, recentLimit: 10 }
+  )
+
+  // Step 2: Build the system prompt
+  let memorySection = ''
+  if (recentHistory.length > 0) {
+    memorySection += 'Recent conversation:\\n'
+      + recentHistory.map(m => \`[\${m.role}]: \${m.content}\`).join('\\n')
+      + '\\n\\n'
+  }
+  if (relevantMemories.length > 0) {
+    memorySection += 'Relevant older memories:\\n'
+      + relevantMemories.map(m => \`[\${m.role}]: \${m.content}\`).join('\\n')
+  }
+
+  const systemPrompt = memorySection
+    ? \`You are a helpful assistant with memory.\\n\${memorySection}\\nUse ALL of this to answer.\`
+    : 'You are a helpful assistant.'
+
+  // Step 3: Call any AI provider
+  const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: \`Bearer \${process.env.OPENAI_API_KEY}\`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: query },
+      ],
+    }),
+  })
+  const data = await aiResponse.json()
+  const reply = data.choices[0].message.content
+
+  // Step 4: Save so AI remembers next time
+  await memory.save('user_123', query, reply)
+
+  return NextResponse.json({ reply })
+}`
+
+const HTTP_SAVE_CODE = `curl -X POST https://memra-rho.vercel.app/api/memory/save \\
   -H 'Content-Type: application/json' \\
-  -H 'x-api-key: mk_live_...' \\
+  -H 'x-api-key: mk_mem_...' \\
   -d '{
+    "userId": "user_123",
     "userMessage": "What is my plan?",
     "aiReply": "You are on the Free plan.",
     "agentId": "support-bot"
@@ -143,37 +233,50 @@ const HTTP_SAVE_CODE = `curl -X POST https://memra.dev/api/memory/save \\
 
 const HTTP_SAVE_RESPONSE = `{ "success": true, "saved": 2 }`
 
-const HTTP_CONTEXT_CODE = `curl 'https://memra.dev/api/memory/context?query=account+plan&agentId=support-bot&limit=5' \\
-  -H 'x-api-key: mk_live_...'`
+const HTTP_CONTEXT_CODE = `curl 'https://memra-rho.vercel.app/api/memory/context?userId=user_123&query=account+plan&limit=5&recentLimit=10' \\
+  -H 'x-api-key: mk_mem_...'`
 
 const HTTP_CONTEXT_RESPONSE = `{
-  "context": [
-    {
-      "id": "clx123abc",
-      "content": "What is my plan?",
-      "role": "user",
-      "createdAt": "2026-06-15T10:00:00.000Z",
-      "similarity": 0.94
-    }
+  "recentHistory": [
+    { "id": "clx1", "content": "What is my plan?", "role": "user", "createdAt": "..." },
+    { "id": "clx2", "content": "You are on Free.", "role": "assistant", "createdAt": "..." }
   ],
+  "relevantMemories": [
+    { "id": "clx0", "content": "I signed up yesterday", "role": "user", "similarity": 0.72 }
+  ],
+  "context": [...],
   "count": 1
 }`
 
-const HTTP_HISTORY_CODE = `curl 'https://memra.dev/api/memory/history?agentId=support-bot&limit=20' \\
-  -H 'x-api-key: mk_live_...'`
+const HTTP_HISTORY_CODE = `# Get ALL messages for a user (no limit)
+curl 'https://memra-rho.vercel.app/api/memory/history?userId=user_123' \\
+  -H 'x-api-key: mk_mem_...'
 
-const HTTP_FORGET_CODE = `curl -X DELETE https://memra.dev/api/memory/forget \\
+# With pagination
+curl 'https://memra-rho.vercel.app/api/memory/history?userId=user_123&limit=20&order=desc' \\
+  -H 'x-api-key: mk_mem_...'`
+
+const HTTP_HISTORY_RESPONSE = `{
+  "history": [
+    { "id": "clx1", "content": "Hello", "role": "user", "createdAt": "..." },
+    { "id": "clx2", "content": "Hi! How can I help?", "role": "assistant", "createdAt": "..." }
+  ],
+  "total": 142,
+  "count": 142
+}`
+
+const HTTP_FORGET_CODE = `curl -X DELETE https://memra-rho.vercel.app/api/memory/forget \\
   -H 'Content-Type: application/json' \\
-  -H 'x-api-key: mk_live_...' \\
-  -d '{ "agentId": "support-bot" }'`
+  -H 'x-api-key: mk_mem_...' \\
+  -d '{ "userId": "user_123", "agentId": "support-bot" }'`
 
 const HTTP_FORGET_RESPONSE = `{ "success": true, "deleted": 14 }`
 
 const ERROR_429_CODE = `{
   "error": "Memory limit reached",
-  "limit": 500,
+  "limit": 100,
   "plan": "free",
-  "upgrade": "https://memra.dev/pricing"
+  "upgrade": "https://memra-rho.vercel.app/pricing"
 }`
 
 // ─── Nav ────────────────────────────────────────────────────────────────────
@@ -185,6 +288,7 @@ const NAV_GROUPS = [
       { id: 'intro', label: 'Introduction' },
       { id: 'install', label: 'Installation' },
       { id: 'quickstart', label: 'Quick start' },
+      { id: 'full-example', label: 'Full example' },
     ],
   },
   {
@@ -205,8 +309,6 @@ const NAV_GROUPS = [
     ],
   },
 ]
-
-const MCP_LINK = '/docs/mcp'
 
 const ALL_IDS = NAV_GROUPS.flatMap(g => g.items.map(i => i.id))
 
@@ -282,6 +384,20 @@ function Divider() {
   return <div className="border-t border-[#111111] my-12" />
 }
 
+function Callout({ type, children }: { type: 'info' | 'warning' | 'tip'; children: ReactNode }) {
+  const s = {
+    info: { bg: 'rgba(59,130,246,0.04)', border: 'rgba(59,130,246,0.12)', color: '#60a5fa', icon: 'ℹ️' },
+    warning: { bg: 'rgba(245,158,11,0.05)', border: 'rgba(245,158,11,0.2)', color: '#f59e0b', icon: '⚠️' },
+    tip: { bg: 'rgba(52,211,153,0.05)', border: 'rgba(52,211,153,0.2)', color: '#34d399', icon: '💡' },
+  }[type]
+  return (
+    <div className="rounded-xl border p-4 mt-4 text-xs leading-relaxed" style={{ background: s.bg, borderColor: s.border }}>
+      <p className="font-semibold mb-1.5" style={{ color: s.color }}>{s.icon} {type.charAt(0).toUpperCase() + type.slice(1)}</p>
+      <div className="text-zinc-400">{children}</div>
+    </div>
+  )
+}
+
 // ─── Main Component ──────────────────────────────────────────────────────────
 
 export default function DocsContent() {
@@ -336,28 +452,30 @@ export default function DocsContent() {
             </div>
           ))}
 
-          {/* MCP SERVER section */}
+          {/* VS Code Extension link */}
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-purple-700 mb-2 px-2">
-              MCP Server
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-700 mb-2 px-2">
+              VS Code Extension
             </p>
             <ul className="space-y-0.5">
               <li>
                 <Link
-                  href={MCP_LINK}
-                  className="flex items-center gap-1.5 w-full px-2 py-1.5 rounded text-sm text-zinc-500 hover:text-purple-400 hover:bg-purple-500/5 transition-colors"
+                  href="/docs/extension"
+                  className="flex items-center gap-1.5 w-full px-2 py-1.5 rounded text-sm text-zinc-500 hover:text-emerald-400 hover:bg-emerald-500/5 transition-colors"
                 >
-                  MCP Docs
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 leading-none">NEW</span>
+                  Extension Guide
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 leading-none">LIVE</span>
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/dashboard/keys?type=mcp"
-                  className="w-full px-2 py-1.5 rounded text-sm text-zinc-500 hover:text-purple-400 hover:bg-purple-500/5 transition-colors block"
+                <a
+                  href="https://marketplace.visualstudio.com/items?itemName=memra.memra"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full px-2 py-1.5 rounded text-sm text-zinc-500 hover:text-emerald-400 hover:bg-emerald-500/5 transition-colors block"
                 >
-                  Get MCP key →
-                </Link>
+                  Install Extension →
+                </a>
               </li>
             </ul>
           </div>
@@ -373,17 +491,30 @@ export default function DocsContent() {
             <Badge variant="blue" className="mb-4">v1</Badge>
             <SectionH2>Introduction</SectionH2>
             <p className="text-zinc-500 leading-relaxed">
-              Memra gives AI assistants persistent memory. Each conversation turn is embedded
-              and stored as a vector, then retrieved with semantic search when your agent needs
-              context — across sessions, users, and agents.
+              Memra gives your AI app a memory. When a user talks to your AI, Memra saves the conversation.
+              Next time that user comes back, your AI remembers what they said — their name, preferences,
+              what they were working on. Everything.
             </p>
+          </div>
+
+          <div
+            className="rounded-xl border p-4 mb-8 text-sm text-zinc-400 leading-relaxed"
+            style={{ background: 'rgba(59,130,246,0.04)', borderColor: 'rgba(59,130,246,0.12)' }}
+          >
+            <p className="font-semibold text-blue-400 mb-2">How it works in 30 seconds:</p>
+            <ol className="space-y-1 list-decimal list-inside">
+              <li>User says &ldquo;My name is Wais&rdquo; → your AI replies → Memra saves both messages</li>
+              <li>User comes back tomorrow, asks &ldquo;What&apos;s my name?&rdquo;</li>
+              <li>Your app calls <code className="text-sky-300">memory.getContext()</code> → gets back &ldquo;My name is Wais&rdquo;</li>
+              <li>You put that in the system prompt → AI answers &ldquo;Your name is Wais!&rdquo;</li>
+            </ol>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-8">
             {[
-              { step: '1', title: 'Save', desc: 'After each AI response, store the exchange with memory.save().' },
-              { step: '2', title: 'Retrieve', desc: 'Before the next response, call memory.getContext() to get relevant memories.' },
-              { step: '3', title: 'Inject', desc: 'Add the context to your system prompt. Your AI now remembers.' },
+              { step: '1', title: 'Save', desc: 'After each AI response, save the exchange with memory.save(). Two lines of code.' },
+              { step: '2', title: 'Retrieve', desc: 'Before the next response, call memory.getContext(). It returns recent chat + relevant older memories.' },
+              { step: '3', title: 'Inject', desc: 'Put the memories in your system prompt. Your AI now remembers everything.' },
             ].map(({ step, title, desc }) => (
               <div
                 key={step}
@@ -409,7 +540,7 @@ export default function DocsContent() {
         <section id="install" className="mb-12 scroll-mt-24">
           <SectionH2>Installation</SectionH2>
           <p className="text-zinc-500 leading-relaxed mb-6">
-            Install the official Memra client from npm. Works with Node.js and any bundler.
+            Install the Memra client package. Works with any JavaScript/TypeScript project — Next.js, Express, anything.
           </p>
           <Tabs defaultTab="npm">
             <TabList>
@@ -428,7 +559,7 @@ export default function DocsContent() {
             </TabPanel>
           </Tabs>
           <p className="text-xs text-zinc-700 mt-4">
-            Package: <code className="text-zinc-500">@memra-client/client</code> · TypeScript included
+            Then get your API key from the <Link href="/dashboard/keys" className="text-blue-400 hover:text-blue-300">dashboard</Link> (starts with <code className="text-zinc-500">mk_mem_</code>).
           </p>
         </section>
 
@@ -438,10 +569,25 @@ export default function DocsContent() {
         <section id="quickstart" className="mb-12 scroll-mt-24">
           <SectionH2>Quick start</SectionH2>
           <p className="text-zinc-500 leading-relaxed mb-6">
-            Add persistent memory to any AI handler in three lines. Get your API key from the{' '}
-            <a href="/dashboard/keys" className="text-blue-400 hover:text-blue-300 transition-colors">dashboard</a>.
+            This is all you need. Four steps: create the client, get context, call your AI, save the exchange.
           </p>
           <CodeBlock code={QUICKSTART_CODE} language="ts" filename="handler.ts" />
+          <Callout type="tip">
+            <code className="text-sky-300">recentHistory</code> gives the AI the last 10 messages in order — so it always knows the recent conversation.{' '}
+            <code className="text-sky-300">relevantMemories</code> gives it related messages from older chats. Together they fix the &ldquo;what&apos;s my name?&rdquo; problem.
+          </Callout>
+        </section>
+
+        <Divider />
+
+        {/* ── Full example ── */}
+        <section id="full-example" className="mb-12 scroll-mt-24">
+          <SectionH2>Full working example</SectionH2>
+          <p className="text-zinc-500 leading-relaxed mb-6">
+            A complete Next.js API route you can copy-paste. This is exactly how the{' '}
+            <Link href="/demo" className="text-blue-400 hover:text-blue-300">demo</Link> works.
+          </p>
+          <CodeBlock code={FULL_EXAMPLE_CODE} language="ts" filename="app/api/chat/route.ts" />
         </section>
 
         <Divider />
@@ -453,7 +599,7 @@ export default function DocsContent() {
           </div>
           <SectionH2>MemoryClient</SectionH2>
           <p className="text-zinc-500 leading-relaxed mb-6">
-            The main entry point. Create one instance per application and reuse it.
+            Create one instance and reuse it. Don&apos;t create a new one for every request.
           </p>
 
           <SectionH3>Constructor</SectionH3>
@@ -461,8 +607,8 @@ export default function DocsContent() {
 
           <SectionH3>Options</SectionH3>
           <ParamTable rows={[
-            { name: 'apiKey', type: 'string', required: true, desc: 'Your API key from the Memra dashboard. Prefix: mk_live_' },
-            { name: 'baseUrl', type: 'string', desc: 'API base URL. Default: https://memra.dev/api' },
+            { name: 'apiKey', type: 'string', required: true, desc: 'Your Memory API key from the dashboard. Starts with mk_mem_' },
+            { name: 'baseUrl', type: 'string', desc: 'API base URL. Default: https://memra-rho.vercel.app/api' },
           ]} />
         </section>
 
@@ -476,8 +622,8 @@ export default function DocsContent() {
           </div>
           <SectionH2>memory.save()</SectionH2>
           <p className="text-zinc-500 leading-relaxed mb-6">
-            Saves a conversation exchange to persistent memory. Stores two records — one for the
-            user message and one for the AI reply — both embedded as semantic vectors for future retrieval.
+            Call this after every AI response. It saves both the user message and AI reply to memory.
+            Each message gets turned into a vector embedding so it can be found later with semantic search.
           </p>
 
           <SectionH3>Signature</SectionH3>
@@ -485,43 +631,14 @@ export default function DocsContent() {
 
           <SectionH3>Parameters</SectionH3>
           <ParamTable rows={[
-            { name: 'userId', type: 'string', required: true, desc: 'Your application\'s identifier for this user. Scopes memories to a single user.' },
-            { name: 'userMessage', type: 'string', required: true, desc: 'The user\'s message text.' },
-            { name: 'aiReply', type: 'string', required: true, desc: 'The AI assistant\'s response text.' },
-            { name: 'options.agentId', type: 'string', desc: 'Namespace to isolate memories by bot or context. Default: \'default\'' },
+            { name: 'userId', type: 'string', required: true, desc: 'Your user\'s ID. Each user gets their own isolated memory — they can\'t see each other\'s data.' },
+            { name: 'userMessage', type: 'string', required: true, desc: 'What the user said.' },
+            { name: 'aiReply', type: 'string', required: true, desc: 'What your AI replied.' },
+            { name: 'options.agentId', type: 'string', desc: 'If your app has multiple bots (e.g. support-bot, coding-bot), use this to keep their memories separate. Default: \'default\'' },
           ]} />
-
-          <SectionH3>Returns</SectionH3>
-          <CodeBlock code="{ success: boolean; saved: number }" language="ts" />
-          <p className="text-xs text-zinc-600 mt-2 mb-6">
-            <code className="text-zinc-500">saved</code> is always <code className="text-zinc-500">2</code> — user message and AI reply are stored as separate records.
-          </p>
 
           <SectionH3>Example</SectionH3>
           <CodeBlock code={SAVE_EXAMPLE_CODE} language="ts" />
-
-          <SectionH3>Errors</SectionH3>
-          <div className="rounded-xl border border-[#1e1e1e] overflow-hidden">
-            <table className="w-full text-xs">
-              <tbody className="bg-[#080808] divide-y divide-[#111111]">
-                {[
-                  { status: '400', label: 'Bad request', desc: 'Missing userMessage or aiReply in request body.' },
-                  { status: '401', label: 'Unauthorized', desc: 'Invalid or missing x-api-key.' },
-                  { status: '429', label: 'Limit reached', desc: 'Memory limit for your plan reached. See error body for upgrade link.' },
-                ].map(r => (
-                  <tr key={r.status}>
-                    <td className="px-4 py-3 w-16">
-                      <span className={`font-mono font-semibold ${r.status === '429' ? 'text-amber-400' : r.status === '401' ? 'text-red-400' : 'text-orange-400'}`}>
-                        {r.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-zinc-400 font-medium">{r.label}</td>
-                    <td className="px-4 py-3 text-zinc-600">{r.desc}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </section>
 
         <Divider />
@@ -534,47 +651,42 @@ export default function DocsContent() {
           </div>
           <SectionH2>memory.getContext()</SectionH2>
           <p className="text-zinc-500 leading-relaxed mb-6">
-            Performs a semantic search over this user's stored memories and returns the most
-            relevant ones for the given query. Call this before generating an AI response to
-            inject relevant history.
+            <strong className="text-zinc-300">This is the most important method.</strong> Call it before every AI response.
+            It returns two things:
           </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+            <div className="rounded-xl border border-emerald-500/20 p-4" style={{ background: 'rgba(16,185,129,0.04)' }}>
+              <p className="text-sm font-semibold text-emerald-400 mb-1">recentHistory</p>
+              <p className="text-xs text-zinc-500">The last 10 messages in chronological order. The AI always knows what was just said.</p>
+            </div>
+            <div className="rounded-xl border border-blue-500/20 p-4" style={{ background: 'rgba(59,130,246,0.04)' }}>
+              <p className="text-sm font-semibold text-blue-400 mb-1">relevantMemories</p>
+              <p className="text-xs text-zinc-500">Semantically similar messages from older conversations. Found via vector search.</p>
+            </div>
+          </div>
 
           <SectionH3>Signature</SectionH3>
           <CodeBlock code={CONTEXT_SIG_CODE} language="ts" />
 
           <SectionH3>Parameters</SectionH3>
           <ParamTable rows={[
-            { name: 'userId', type: 'string', required: true, desc: 'User identifier. Scopes the search to this user\'s memories.' },
-            { name: 'query', type: 'string', required: true, desc: 'The current user message. Used to find semantically relevant memories.' },
-            { name: 'options.agentId', type: 'string', desc: 'Filter memories to this agent namespace. Default: \'default\'' },
-            { name: 'options.limit', type: 'number', desc: 'Max number of memories to return. Default: 5' },
+            { name: 'userId', type: 'string', required: true, desc: 'The user whose memories to search.' },
+            { name: 'query', type: 'string', required: true, desc: 'The current user message. Used to find related older memories.' },
+            { name: 'options.agentId', type: 'string', desc: 'Filter to a specific bot\'s memories. Default: \'default\'' },
+            { name: 'options.limit', type: 'number', desc: 'How many semantic results to return. Default: 5' },
+            { name: 'options.recentLimit', type: 'number', desc: 'How many recent messages to return. Default: 10' },
           ]} />
 
           <SectionH3>Response types</SectionH3>
           <CodeBlock code={CONTEXT_TYPES_CODE} language="ts" />
-          <div
-            className="rounded-xl border p-4 mt-3 mb-6 text-xs text-zinc-400 leading-relaxed"
-            style={{ background: 'rgba(59,130,246,0.04)', borderColor: 'rgba(59,130,246,0.12)' }}
-          >
-            <strong className="text-blue-400">Note:</strong> The response field is{' '}
-            <code className="text-sky-300">context</code>, not <code className="text-sky-300">memories</code>.
-            Memories in <code className="text-sky-300">context</code> include a <code className="text-sky-300">similarity</code> score (0–1).
-            The <code className="text-sky-300">latencyMs</code> field is added client-side by the SDK.
-          </div>
 
           <SectionH3>Example</SectionH3>
           <CodeBlock code={CONTEXT_EXAMPLE_CODE} language="ts" />
 
-          <div
-            className="rounded-xl border p-4 mt-4 text-xs leading-relaxed"
-            style={{ background: 'rgba(245,158,11,0.05)', borderColor: 'rgba(245,158,11,0.2)' }}
-          >
-            <p className="font-semibold text-amber-400 mb-1.5">⚠ Common mistake</p>
-            <p className="text-zinc-400">
-              Always inject memory into the system prompt, not the user message. Putting context
-              in the user message looks like random text to the AI — it won&apos;t use it correctly.
-            </p>
-          </div>
+          <Callout type="warning">
+            Always put memory in the <strong>system prompt</strong>, not the user message. If you put it in the user message,
+            the AI treats it as something the user said — not as context it should use.
+          </Callout>
         </section>
 
         <Divider />
@@ -587,10 +699,8 @@ export default function DocsContent() {
           </div>
           <SectionH2>memory.getHistory()</SectionH2>
           <p className="text-zinc-500 leading-relaxed mb-6">
-            Returns messages in chronological order (oldest first). Unlike{' '}
-            <code className="text-sky-300 text-sm">getContext()</code>, this is not semantic — it
-            returns a time-ordered list, useful for replaying conversation history or building a
-            chat timeline.
+            Returns the complete chat history for a user — every message they ever sent and received.
+            Use this to show past conversations in your UI. <strong className="text-zinc-300">You don&apos;t need your own database for chat storage</strong> — Memra stores it all.
           </p>
 
           <SectionH3>Signature</SectionH3>
@@ -598,17 +708,22 @@ export default function DocsContent() {
 
           <SectionH3>Parameters</SectionH3>
           <ParamTable rows={[
-            { name: 'userId', type: 'string', required: true, desc: 'User identifier.' },
-            { name: 'options.agentId', type: 'string', desc: 'Filter by agent. Omit to return history across all agents.' },
-            { name: 'options.limit', type: 'number', desc: 'Number of messages to return. Default: 20' },
+            { name: 'userId', type: 'string', required: true, desc: 'The user whose history to fetch.' },
+            { name: 'options.agentId', type: 'string', desc: 'Filter by bot. Omit to get all bots\' messages together.' },
+            { name: 'options.limit', type: 'number', desc: 'Omit to get ALL messages. Set a number to limit.' },
+            { name: 'options.order', type: "'asc' | 'desc'", desc: "'asc' = oldest first (default, good for chat UI). 'desc' = newest first." },
+            { name: 'options.before', type: 'string', desc: 'ISO date. Get messages before this time (for pagination).' },
+            { name: 'options.after', type: 'string', desc: 'ISO date. Get messages after this time (for pagination).' },
           ]} />
-
-          <p className="text-xs text-zinc-600 mt-2 mb-6">
-            History memories do not have a <code className="text-zinc-500">similarity</code> field — that is only present on <code className="text-zinc-500">getContext()</code> results.
-          </p>
 
           <SectionH3>Example</SectionH3>
           <CodeBlock code={HISTORY_EXAMPLE_CODE} language="ts" />
+
+          <Callout type="tip">
+            <code className="text-sky-300">getHistory()</code> is for your UI — showing users their past conversations.{' '}
+            <code className="text-sky-300">getContext()</code> is for the AI — giving it the right memories before it responds.
+            They serve different purposes.
+          </Callout>
         </section>
 
         <Divider />
@@ -621,9 +736,8 @@ export default function DocsContent() {
           </div>
           <SectionH2>memory.forget()</SectionH2>
           <p className="text-zinc-500 leading-relaxed mb-6">
-            Permanently deletes memories. Pass an <code className="text-sky-300 text-sm">agentId</code> to
-            scope deletion to a single agent, or omit it to delete all memories for this user.
-            This action cannot be undone.
+            Permanently deletes memories. Use this for GDPR compliance, when a user asks to be forgotten,
+            or when you want to start fresh. <strong className="text-zinc-300">This cannot be undone.</strong>
           </p>
 
           <SectionH3>Signature</SectionH3>
@@ -631,8 +745,8 @@ export default function DocsContent() {
 
           <SectionH3>Parameters</SectionH3>
           <ParamTable rows={[
-            { name: 'userId', type: 'string', required: true, desc: 'User identifier.' },
-            { name: 'options.agentId', type: 'string', desc: 'Scope deletion to this agent. Omit to delete ALL memories for this user.' },
+            { name: 'userId', type: 'string', required: true, desc: 'The user whose memories to delete.' },
+            { name: 'options.agentId', type: 'string', desc: 'Only delete this bot\'s memories. Omit to delete ALL memories for this user.' },
           ]} />
 
           <SectionH3>Example</SectionH3>
@@ -648,18 +762,15 @@ export default function DocsContent() {
           </div>
           <SectionH2>REST API</SectionH2>
           <p className="text-zinc-500 leading-relaxed mb-6">
-            Use the REST API directly from any language or tool. All endpoints require an
-            API key passed in the <code className="text-sky-300 text-sm">x-api-key</code> header.
-            The user's identity is derived from the API key — you do not need to pass a userId
-            in the request body or query string.
+            Don&apos;t want to use the npm package? Call the API directly with curl, Python, Go — any language.
+            All endpoints need your API key in the <code className="text-sky-300 text-sm">x-api-key</code> header.
           </p>
 
           <div className="rounded-xl border border-[#1e1e1e] bg-[#0d0d0d] px-5 py-4 mb-8 space-y-1.5 font-mono text-xs">
             <p className="text-zinc-700 text-[10px] uppercase tracking-widest font-semibold mb-3">Base URL</p>
-            <p className="text-zinc-300">https://memra.dev/api</p>
+            <p className="text-zinc-300">https://memra-rho.vercel.app/api</p>
           </div>
 
-          {/* Endpoints table */}
           <div className="rounded-xl border border-[#1e1e1e] overflow-hidden mb-8">
             <table className="w-full text-sm">
               <thead>
@@ -671,10 +782,10 @@ export default function DocsContent() {
               </thead>
               <tbody className="bg-[#080808] divide-y divide-[#111111]">
                 {[
-                  { method: 'POST', path: '/memory/save', desc: 'Save a conversation turn' },
-                  { method: 'GET', path: '/memory/context', desc: 'Semantic search — returns most relevant memories' },
-                  { method: 'GET', path: '/memory/history', desc: 'Chronological message history' },
-                  { method: 'DELETE', path: '/memory/forget', desc: 'Delete memories (by agent or all)' },
+                  { method: 'POST', path: '/memory/save', desc: 'Save a user message + AI reply' },
+                  { method: 'GET', path: '/memory/context', desc: 'Get recent chat + relevant older memories' },
+                  { method: 'GET', path: '/memory/history', desc: 'Get complete chat history for a user' },
+                  { method: 'DELETE', path: '/memory/forget', desc: 'Delete memories' },
                 ].map(r => (
                   <tr key={r.path}>
                     <td className="px-4 py-3">
@@ -690,38 +801,43 @@ export default function DocsContent() {
             </table>
           </div>
 
-          {/* POST /memory/save */}
           <h3 className="text-base font-semibold text-zinc-200 mb-3">POST /memory/save</h3>
           <ParamTable rows={[
-            { name: 'userMessage', type: 'string', required: true, desc: 'The user\'s message text.' },
-            { name: 'aiReply', type: 'string', required: true, desc: 'The AI assistant\'s response text.' },
-            { name: 'agentId', type: 'string', desc: 'Memory namespace. Default: \'default\'' },
+            { name: 'userId', type: 'string', required: true, desc: 'Your user\'s ID.' },
+            { name: 'userMessage', type: 'string', required: true, desc: 'What the user said.' },
+            { name: 'aiReply', type: 'string', required: true, desc: 'What the AI replied.' },
+            { name: 'agentId', type: 'string', desc: 'Bot namespace. Default: \'default\'' },
           ]} />
           <CodeBlock code={HTTP_SAVE_CODE} language="bash" className="mb-2" />
           <CodeBlock code={HTTP_SAVE_RESPONSE} language="json" />
 
-          {/* GET /memory/context */}
           <h3 className="text-base font-semibold text-zinc-200 mb-3 mt-8">GET /memory/context</h3>
           <ParamTable rows={[
-            { name: 'query', type: 'string', required: true, desc: 'The search query — finds semantically similar memories.' },
-            { name: 'agentId', type: 'string', desc: 'Filter to this agent namespace. Default: \'default\'' },
-            { name: 'limit', type: 'number', desc: 'Max results. Default: 5' },
+            { name: 'userId', type: 'string', required: true, desc: 'User to search.' },
+            { name: 'query', type: 'string', required: true, desc: 'The search query.' },
+            { name: 'agentId', type: 'string', desc: 'Filter by bot. Default: \'default\'' },
+            { name: 'limit', type: 'number', desc: 'Max semantic results. Default: 5' },
+            { name: 'recentLimit', type: 'number', desc: 'Max recent messages. Default: 10' },
           ]} />
           <CodeBlock code={HTTP_CONTEXT_CODE} language="bash" className="mb-2" />
           <CodeBlock code={HTTP_CONTEXT_RESPONSE} language="json" />
 
-          {/* GET /memory/history */}
           <h3 className="text-base font-semibold text-zinc-200 mb-3 mt-8">GET /memory/history</h3>
           <ParamTable rows={[
-            { name: 'agentId', type: 'string', desc: 'Filter by agent. Omit for all agents.' },
-            { name: 'limit', type: 'number', desc: 'Messages to return. Default: 20' },
+            { name: 'userId', type: 'string', required: true, desc: 'User whose history to fetch.' },
+            { name: 'agentId', type: 'string', desc: 'Filter by bot. Omit for all.' },
+            { name: 'limit', type: 'number', desc: 'Omit to get ALL messages.' },
+            { name: 'order', type: "'asc'|'desc'", desc: 'Default: asc (oldest first).' },
+            { name: 'before', type: 'string', desc: 'ISO date for pagination.' },
+            { name: 'after', type: 'string', desc: 'ISO date for pagination.' },
           ]} />
-          <CodeBlock code={HTTP_HISTORY_CODE} language="bash" />
+          <CodeBlock code={HTTP_HISTORY_CODE} language="bash" className="mb-2" />
+          <CodeBlock code={HTTP_HISTORY_RESPONSE} language="json" />
 
-          {/* DELETE /memory/forget */}
           <h3 className="text-base font-semibold text-zinc-200 mb-3 mt-8">DELETE /memory/forget</h3>
           <ParamTable rows={[
-            { name: 'agentId', type: 'string', desc: 'Agent to clear. Omit to delete ALL memories for this user.' },
+            { name: 'userId', type: 'string', required: true, desc: 'User whose memories to delete.' },
+            { name: 'agentId', type: 'string', desc: 'Delete only this bot\'s memories. Omit to delete everything.' },
           ]} />
           <CodeBlock code={HTTP_FORGET_CODE} language="bash" className="mb-2" />
           <CodeBlock code={HTTP_FORGET_RESPONSE} language="json" />
@@ -733,31 +849,32 @@ export default function DocsContent() {
         <section id="errors" className="mb-12 scroll-mt-24">
           <SectionH2>Error codes</SectionH2>
           <p className="text-zinc-500 leading-relaxed mb-6">
-            All errors return JSON with an <code className="text-sky-300 text-sm">error</code> field.
-            The SDK throws on non-2xx status codes.
+            When something goes wrong, the API returns a JSON object with an <code className="text-sky-300 text-sm">error</code> field.
+            The SDK throws an error automatically — wrap calls in try/catch.
           </p>
 
           <div className="rounded-xl border border-[#1e1e1e] overflow-hidden mb-8">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[#1e1e1e] bg-[#0d0d0d]">
-                  {['Status', 'Meaning', 'Endpoints'].map(h => (
+                  {['Status', 'What went wrong', 'How to fix'].map(h => (
                     <th key={h} className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-widest text-zinc-700">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="bg-[#080808] divide-y divide-[#111111]">
                 {[
-                  { status: '400', style: 'text-orange-400', meaning: 'Missing required fields', endpoints: 'save (userMessage/aiReply), context (query)' },
-                  { status: '401', style: 'text-red-400',    meaning: 'Invalid or missing API key', endpoints: 'All endpoints' },
-                  { status: '429', style: 'text-amber-400',  meaning: 'Memory limit reached', endpoints: 'save only' },
+                  { status: '400', style: 'text-orange-400', meaning: 'Missing required field', fix: 'Check that you\'re sending userMessage, aiReply, query, etc.' },
+                  { status: '401', style: 'text-red-400', meaning: 'Bad API key', fix: 'Check your mk_mem_ key is correct and active in the dashboard.' },
+                  { status: '403', style: 'text-purple-400', meaning: 'Wrong key type', fix: 'You\'re using an extension key (mk_ext_) on a memory endpoint. Use mk_mem_ instead.' },
+                  { status: '429', style: 'text-amber-400', meaning: 'Memory limit reached', fix: 'Your plan\'s storage is full. Delete old memories or upgrade.' },
                 ].map(r => (
                   <tr key={r.status}>
                     <td className="px-4 py-3">
                       <span className={`font-mono font-bold text-sm ${r.style}`}>{r.status}</span>
                     </td>
                     <td className="px-4 py-3 text-zinc-300 text-xs font-medium">{r.meaning}</td>
-                    <td className="px-4 py-3 text-zinc-600 text-xs">{r.endpoints}</td>
+                    <td className="px-4 py-3 text-zinc-600 text-xs">{r.fix}</td>
                   </tr>
                 ))}
               </tbody>
@@ -765,26 +882,7 @@ export default function DocsContent() {
           </div>
 
           <h3 className="text-base font-semibold text-zinc-200 mb-3">429 — Limit reached</h3>
-          <p className="text-xs text-zinc-600 mb-3">
-            Returned only by <code className="text-zinc-500">POST /memory/save</code> when the user has
-            reached their plan limit. Existing memories are safe — only new saves are blocked.
-          </p>
           <CodeBlock code={ERROR_429_CODE} language="json" />
-
-          <div
-            className="rounded-xl border p-5 mt-6"
-            style={{ background: 'rgba(139,92,246,0.04)', borderColor: 'rgba(139,92,246,0.12)' }}
-          >
-            <p className="text-xs text-zinc-400 leading-relaxed">
-              Free plan includes <strong className="text-zinc-200">500 memory records</strong>{' '}
-              (250 conversation turns). When the limit is reached, the 429 response includes a{' '}
-              <code className="text-sky-300">limit</code>, <code className="text-sky-300">plan</code>,
-              and <code className="text-sky-300">upgrade</code> URL.{' '}
-              <a href="/pricing" className="text-purple-400 hover:text-purple-300 transition-colors">
-                View pricing →
-              </a>
-            </p>
-          </div>
         </section>
 
       </main>
