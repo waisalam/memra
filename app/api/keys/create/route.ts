@@ -22,19 +22,13 @@ export async function POST(req: NextRequest) {
   }
 
   const plan = (user.plan ?? 'free') as Plan
-  const keyLimit = PLAN_LIMITS[plan]?.apiKeys ?? PLAN_LIMITS.free.apiKeys
 
-  if (keyLimit !== Infinity) {
-    const activeKeyCount = await prisma.apiKey.count({ where: { userId, isActive: true } })
-    if (activeKeyCount >= keyLimit) {
+  if (keyType === 'extension') {
+    const extKeyCount = await prisma.apiKey.count({ where: { userId, keyType: 'extension', isActive: true } })
+    const extLimit = PLAN_LIMITS[plan]?.extensionKeys ?? 1
+    if (extKeyCount >= extLimit) {
       return Response.json(
-        {
-          error: `API key limit reached. ${
-            plan === 'free'
-              ? `Free plan allows ${keyLimit} keys. Upgrade to Pro for more.`
-              : `Your plan allows ${keyLimit} keys.`
-          }`,
-        },
+        { error: 'You can only have 1 active extension key. Revoke the existing one to create a new one.' },
         { status: 429 }
       )
     }

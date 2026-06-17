@@ -96,8 +96,10 @@ export function KeysClient({
 
   const visibleKeys = keys.filter((k) => k.keyType === activeTab)
   const activeVisible = visibleKeys.filter((k) => k.isActive)
-  const atKeyLimit = keyLimit !== (Infinity as number) && activeVisible.length >= keyLimit
-  const limitLabel = keyLimit === Infinity ? '∞' : keyLimit
+  const extKeyLimit = activeTab === 'extension' ? 1 : Infinity
+  const effectiveLimit = activeTab === 'extension' ? extKeyLimit : keyLimit
+  const atKeyLimit = effectiveLimit !== Infinity && activeVisible.length >= effectiveLimit
+  const limitLabel = effectiveLimit === Infinity ? '∞' : effectiveLimit
 
   function maskKey(plainKey: string, type: 'memory' | 'mcp' | 'extension') {
     const prefix = type === 'extension' ? 'mk_ext_' : type === 'mcp' ? 'mk_mcp_' : 'mk_mem_'
@@ -299,17 +301,16 @@ export function KeysClient({
           </p>
         </div>
         {atKeyLimit ? (
-          <a
-            href="/pricing"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-amber-400 border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 transition-all shrink-0"
+          <div
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-amber-400 border border-amber-500/30 bg-amber-500/5 shrink-0"
             style={{ minHeight: '44px' }}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
             </svg>
-            <span className="hidden sm:inline">Key limit reached — Upgrade</span>
-            <span className="sm:hidden">Upgrade</span>
-          </a>
+            <span className="hidden sm:inline">{activeTab === 'extension' ? 'Max 1 extension key — revoke to create new' : 'Key limit reached'}</span>
+            <span className="sm:hidden">{activeTab === 'extension' ? '1 key max' : 'Limit reached'}</span>
+          </div>
         ) : (
           <button
             onClick={openCreateModal}
