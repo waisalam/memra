@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
+import { PLAN_LIMITS, type Plan } from '@/lib/plans'
 import { ExtensionSessionsClient } from './extension-sessions-client'
 
 export default async function ExtensionPage() {
@@ -10,6 +11,8 @@ export default async function ExtensionPage() {
   if (!session) redirect('/login')
 
   const accountId = session.user.id
+  const plan = (session.user.plan ?? 'free') as Plan
+  const sessionLimit = PLAN_LIMITS[plan]?.extensionSessions ?? PLAN_LIMITS.free.extensionSessions
 
   const [sessions, total, activeSessions, extKeyCount, toolStats] = await Promise.all([
     prisma.extensionSession.findMany({
@@ -56,6 +59,8 @@ export default async function ExtensionPage() {
       totalMessages={totalMessages}
       topTool={topTool}
       hasExtKey={extKeyCount > 0}
+      plan={plan}
+      sessionLimit={sessionLimit === Infinity ? -1 : sessionLimit}
     />
   )
 }

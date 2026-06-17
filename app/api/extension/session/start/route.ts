@@ -4,6 +4,7 @@ export const runtime = 'nodejs'
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { validateApiKey } from '@/lib/validateApiKey'
+import { PLAN_LIMITS } from '@/lib/plans'
 
 function logCall(accountId: string, statusCode: number, latencyMs: number) {
   ;(async () => {
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: 'Wrong API key type. Extension endpoints require an Extension key (mk_ext_...). Get one at: https://memra-rho.vercel.app/dashboard/keys', code: 'WRONG_KEY_TYPE' }, { status: 403 })
   }
 
-  const { accountId } = validated
+  const { accountId, plan } = validated
 
   const body = await req.json()
   const { tool, sessionHash, title, projectId, workspacePath } = body
@@ -49,6 +50,22 @@ export async function POST(req: NextRequest) {
       isNew: false,
       resumePrompt: null,
     })
+  }
+
+  const sessionLimit = PLAN_LIMITS[plan]?.extensionSessions ?? PLAN_LIMITS.free.extensionSessions
+  if (sessionLimit !== Infinity) {
+    const count = await prisma.extensionSession.count({ where: { accountId } })
+    if (count >= sessionLimit) {
+      logCall(accountId, 403, Date.now() - start)
+      return Response.json({
+        error: `Session limit reached. Your ${plan} plan allows ${sessionLimit} sessions. Upgrade to store more.`,
+        code: 'SESSION_LIMIT',
+        current: count,
+        limit: sessionLimit,
+        plan,
+        upgradeUrl: 'https://memra-rho.vercel.app/pricing',
+      }, { status: 403 })
+    }
   }
 
   const autoTitle = title ?? 'Untitled Session'
