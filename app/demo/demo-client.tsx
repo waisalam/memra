@@ -243,9 +243,11 @@ export function DemoClient({
       const data = await res.json()
       if (data.apiKey?.key) {
         setGeneratedKey(data.apiKey.key)
-        setConfig((c) => ({ ...c, apiKey: data.apiKey.key }))
-        setConfigSaved(false)
-        pushToast('success', 'API key created — copy it now')
+        const newConfig = { ...config, apiKey: data.apiKey.key }
+        setConfig(newConfig)
+        localStorage.setItem('memra-demo-config', JSON.stringify(newConfig))
+        setConfigSaved(true)
+        pushToast('success', 'API key created and saved — copy it now')
       } else {
         pushToast('error', 'Failed to create API key')
       }
@@ -296,6 +298,10 @@ export function DemoClient({
           `/api/memory/context?userId=${encodeURIComponent(config.userId)}&agentId=${encodeURIComponent(config.agentId)}&query=${encodeURIComponent(userMsg)}&limit=5&recentLimit=10`,
           { headers: { 'x-api-key': config.apiKey } }
         )
+        if (ctxRes.status === 401) {
+          pushToast('error', 'API key invalid or expired — generate a new one')
+          setConnectionStatus('error')
+        }
         const ctxData = ctxRes.ok ? await ctxRes.json() : { context: [], recentHistory: [], relevantMemories: [] }
         contextItems = ctxData.relevantMemories ?? ctxData.context ?? []
         recentItems = ctxData.recentHistory ?? []
@@ -325,7 +331,7 @@ export function DemoClient({
       if (chatData.error) pushToast('error', `AI error: ${chatData.error}`)
 
       if (hasCreds) {
-        await fetch('/api/memory/save', {
+        const saveRes = await fetch('/api/memory/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-api-key': config.apiKey },
           body: JSON.stringify({
@@ -335,7 +341,11 @@ export function DemoClient({
             aiReply,
           }),
         })
-        await fetchTotalSaved()
+        if (saveRes.status === 401) {
+          pushToast('error', 'Memory not saved — API key invalid. Generate a new one.')
+        } else if (saveRes.ok) {
+          await fetchTotalSaved()
+        }
       }
 
       setMessages((prev) => [
