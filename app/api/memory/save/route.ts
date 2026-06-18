@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { validateApiKey, checkMemoryLimit } from '@/lib/validateApiKey'
 import { generateEmbedding } from '@/lib/embeddings'
+import { checkAndIncrementUsage } from '@/lib/rateLimit'
 import { PLAN_LIMITS } from '@/lib/plans'
 
 export const runtime = 'nodejs'
@@ -31,6 +32,18 @@ export async function POST(req: NextRequest) {
   }
 
   const { accountId, plan } = validated
+
+  try {
+    await checkAndIncrementUsage(accountId, plan)
+  } catch (err) {
+    if (err instanceof Error && err.message.startsWith('RATE_LIMIT:')) {
+      logCall(accountId, null, 429, Date.now() - start)
+      return Response.json(
+        { error: 'Monthly API limit reached', plan, upgradeUrl: 'https://memra-rho.vercel.app/pricing' },
+        { status: 429 }
+      )
+    }
+  }
 
   const withinLimit = await checkMemoryLimit(accountId, plan)
   if (!withinLimit) {

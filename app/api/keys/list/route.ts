@@ -1,16 +1,17 @@
 export const dynamic = 'force-dynamic'
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { auth } from '@/auth'
 
 export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = req.nextUrl
-  const userId = searchParams.get('userId')
-
-  if (!userId) {
-    return Response.json({ error: 'userId is required' }, { status: 400 })
+  const session = await auth()
+  if (!session?.user?.id) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  const userId = session.user.id
 
   const keys = await prisma.apiKey.findMany({
     where: { userId, isActive: true },

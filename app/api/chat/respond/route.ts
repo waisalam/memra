@@ -1,9 +1,15 @@
 export const dynamic = 'force-dynamic'
 import { NextRequest } from 'next/server'
+import { validateApiKey } from '@/lib/validateApiKey'
 
 export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {
+  const validated = await validateApiKey(req)
+  if (!validated) {
+    return Response.json({ error: 'Invalid or missing API key' }, { status: 401 })
+  }
+
   const start = Date.now()
   const { userMessage, context = [], recentHistory = [], history = [] } = await req.json()
 

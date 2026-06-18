@@ -2,23 +2,25 @@ export const dynamic = 'force-dynamic'
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { PLAN_LIMITS, type Plan } from '@/lib/plans'
+import { auth } from '@/auth'
 
 export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {
-  const body = await req.json()
-  const { userId, name = 'Default Key', keyType: rawKeyType } = body
-  const keyType = rawKeyType === 'mcp' ? 'mcp' : rawKeyType === 'extension' ? 'extension' : 'memory'
-
-  if (!userId) {
-    return Response.json({ error: 'userId is required' }, { status: 400 })
+  const session = await auth()
+  if (!session?.user?.id) {
+    return Response.json({ error: 'Unauthorized. Please sign in at https://memra-rho.vercel.app/login' }, { status: 401 })
   }
 
-  let user = await prisma.user.findUnique({ where: { id: userId } })
+  const body = await req.json()
+  const { name = 'Default Key', keyType: rawKeyType } = body
+  const keyType = rawKeyType === 'mcp' ? 'mcp' : rawKeyType === 'extension' ? 'extension' : 'memory'
+
+  const userId = session.user.id
+
+  const user = await prisma.user.findUnique({ where: { id: userId } })
   if (!user) {
-    user = await prisma.user.create({
-      data: { id: userId, email: `${userId}@memra.dev` },
-    })
+    return Response.json({ error: 'User not found' }, { status: 404 })
   }
 
   const plan = (user.plan ?? 'free') as Plan

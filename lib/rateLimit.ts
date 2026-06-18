@@ -36,6 +36,6 @@ export async function checkAndIncrementUsage(
   } catch (err) {
     if (err instanceof Error && err.message.startsWith('RATE_LIMIT:')) throw err
     console.error('Rate limit check failed:', err)
-    return { callCount: 0, limit: 999999, remaining: 999999 }
+    throw new Error('RATE_LIMIT:Rate limit check unavailable')
   }
 }
